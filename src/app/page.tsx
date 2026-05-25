@@ -3,6 +3,10 @@ import { listPublicVenues } from '@/lib/venues';
 import type { Venue } from '@/lib/types';
 import { ChapterLeadForm } from './_components/ChapterLeadForm';
 
+// Force runtime rendering so the build doesn't try to query Postgres
+// (DB hostname only resolves at runtime on Railway).
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   const venues = await listPublicVenues();
   const restaurants = venues.filter((v) => v.venue_type === 'restaurant');
