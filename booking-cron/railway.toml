@@ -1,0 +1,10 @@
+[build]
+builder = "nixpacks"
+
+[[crons]]
+schedule = "0 17 * * *"
+command = "node dist/send-reminders.js && node dist/send-post-dinner.js"
+
+[[crons]]
+schedule = "*/15 * * * *"
+command = "node dist/process-waitlist.js && node dist/expire-pending-reservations.js"

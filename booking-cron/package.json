@@ -1,0 +1,28 @@
+{
+  "name": "convive-booking-cron",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "start:reminders": "node dist/send-reminders.js",
+    "start:post-dinner": "node dist/send-post-dinner.js",
+    "start:process-waitlist": "node dist/process-waitlist.js",
+    "start:expire-pending": "node dist/expire-pending-reservations.js",
+    "start:all": "node dist/run-all.js"
+  },
+  "dependencies": {
+    "pg": "^8.11.3",
+    "resend": "^3.2.0",
+    "@react-email/components": "^0.0.15",
+    "@react-email/render": "^0.0.12",
+    "date-fns": "^3.6.0",
+    "date-fns-tz": "^3.1.3",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "@types/node": "^20.12.7",
+    "@types/pg": "^8.11.5",
+    "@types/react": "^18.2.79"
+  }
+}
