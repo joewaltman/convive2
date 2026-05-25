@@ -1,9 +1,17 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { Suspense, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function AdminVerifyPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminVerifyForm />
+    </Suspense>
+  );
+}
+
+function AdminVerifyForm() {
   const router = useRouter();
   const sp = useSearchParams();
   const initialEmail = sp.get('email') ?? '';
