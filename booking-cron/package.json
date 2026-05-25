@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "tsc",
+    "start": "node dist/run-all.js",
     "start:reminders": "node dist/send-reminders.js",
     "start:post-dinner": "node dist/send-post-dinner.js",
     "start:process-waitlist": "node dist/process-waitlist.js",
