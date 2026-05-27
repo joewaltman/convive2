@@ -121,8 +121,22 @@ export async function POST(req: Request) {
   const seatCount = reservation.seat_count;
   const amount = dinner.price_cents * seatCount;
 
-  // Stripe Checkout Session. Branding (colors, logo, brand name) is configured
-  // in the Stripe Dashboard under Settings > Branding rather than per-session.
+  // Per-chapter Stripe Checkout branding. branding_settings is a preview field
+  // on Stripe API version 2025-09-30.clover (set in src/lib/stripe.ts).
+  // Schema: background_color (#hex), button_color (#hex), display_name,
+  // border_style, font_family, icon, logo. We only set what each chapter has.
+  const HEX = /^#[0-9A-Fa-f]{6}$/;
+  const brandingSettings: Record<string, string> = {};
+  if (HEX.test(chapter.color_primary)) {
+    brandingSettings.background_color = chapter.color_primary;
+  }
+  if (HEX.test(chapter.color_accent)) {
+    brandingSettings.button_color = chapter.color_accent;
+  }
+  if (chapter.display_name) {
+    brandingSettings.display_name = chapter.display_name;
+  }
+
   const params = {
     mode: 'payment' as const,
     customer_email: guest.email,
@@ -148,6 +162,9 @@ export async function POST(req: Request) {
       dinner_id: String(dinner.id),
       chapter_slug: chapter.slug,
     },
+    ...(Object.keys(brandingSettings).length > 0
+      ? { branding_settings: brandingSettings }
+      : {}),
   };
 
   let session: { id: string; url: string | null };
