@@ -17,7 +17,10 @@ interface ProfileBody {
 }
 
 function baseUrl(): string {
-  return process.env.NEXT_PUBLIC_BASE_URL ?? 'https://con-vive.com';
+  const raw = (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://con-vive.com').trim();
+  // Stripe requires an explicit scheme. Auto-prepend https:// if missing.
+  const withScheme = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  return withScheme.replace(/\/+$/, '');
 }
 
 function asString(v: unknown): string {
@@ -153,8 +156,18 @@ export async function POST(req: Request) {
     },
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const session = await (stripe.checkout.sessions.create as any)(params);
+  let session: { id: string; url: string | null };
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    session = await (stripe.checkout.sessions.create as any)(params);
+  } catch (err) {
+    console.error('stripe_checkout_create_failed', err);
+    const message = err instanceof Error ? err.message : 'stripe_error';
+    return NextResponse.json(
+      { error: 'stripe_error', detail: message },
+      { status: 502 },
+    );
+  }
 
   await attachCheckoutSession(reservation.id, session.id);
 

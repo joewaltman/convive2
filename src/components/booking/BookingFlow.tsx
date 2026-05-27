@@ -29,6 +29,15 @@ interface ProfileData {
   dietary_restrictions: string[];
 }
 
+const GRAD_YEARS: number[] = (() => {
+  const current = new Date().getFullYear();
+  const max = current + 6; // covers current undergrads still anticipating graduation
+  const min = 1940;
+  const years: number[] = [];
+  for (let y = max; y >= min; y--) years.push(y);
+  return years;
+})();
+
 const DIETARY_OPTIONS = [
   'vegetarian',
   'vegan',
@@ -187,7 +196,22 @@ export function BookingFlow({ chapter, dinner, guest }: BookingFlowProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      const data = await res.json();
+      const rawText = await res.text();
+      let data: Record<string, unknown> = {};
+      if (rawText) {
+        try {
+          data = JSON.parse(rawText) as Record<string, unknown>;
+        } catch {
+          // Non-JSON response (e.g. HTML error page from a 5xx). Surface a useful message.
+          throw new Error(
+            `Server error (HTTP ${res.status}). Please try again or contact support.`,
+          );
+        }
+      } else if (!res.ok) {
+        throw new Error(
+          `Server error (HTTP ${res.status}). Please try again or contact support.`,
+        );
+      }
 
       if (data.fullForBooking) {
         // Redirect to waitlist
@@ -197,11 +221,12 @@ export function BookingFlow({ chapter, dinner, guest }: BookingFlowProps) {
 
       if (data.needsCode) {
         // Existing guest that needs verification
-        setEmail(data.email);
+        const emailFromServer = typeof data.email === 'string' ? data.email : '';
+        setEmail(emailFromServer);
         await fetch('/api/auth/request-code', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: data.email, chapterSlug: chapter.slug }),
+          body: JSON.stringify({ email: emailFromServer, chapterSlug: chapter.slug }),
         });
         setFlowState('EXISTING_GUEST_CODE');
         setIsSubmitting(false);
@@ -209,10 +234,11 @@ export function BookingFlow({ chapter, dinner, guest }: BookingFlowProps) {
       }
 
       if (!res.ok) {
-        throw new Error(data.error || 'Something went wrong');
+        const errMsg = typeof data.error === 'string' ? data.error : 'Something went wrong';
+        throw new Error(errMsg);
       }
 
-      if (data.checkout_url) {
+      if (typeof data.checkout_url === 'string') {
         window.location.href = data.checkout_url;
       }
     } catch (err) {
@@ -360,16 +386,18 @@ export function BookingFlow({ chapter, dinner, guest }: BookingFlowProps) {
               <label htmlFor="grad_year" className="block body-sm font-medium text-ink mb-1">
                 Graduation year <span className="text-terracotta">*</span>
               </label>
-              <input
-                type="number"
+              <select
                 id="grad_year"
                 value={profile.grad_year}
                 onChange={(e) => setProfile({ ...profile, grad_year: e.target.value })}
                 required
-                min="1900"
-                max="2100"
                 className="w-full px-3 py-2 border border-border rounded-sm bg-white body-base focus:outline-none focus:ring-2"
-              />
+              >
+                <option value="">Select year</option>
+                {GRAD_YEARS.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label htmlFor="major" className="block body-sm font-medium text-ink mb-1">
@@ -500,16 +528,18 @@ export function BookingFlow({ chapter, dinner, guest }: BookingFlowProps) {
               <label htmlFor="confirm_grad_year" className="block body-sm font-medium text-ink mb-1">
                 Graduation year <span className="text-terracotta">*</span>
               </label>
-              <input
-                type="number"
+              <select
                 id="confirm_grad_year"
                 value={profile.grad_year}
                 onChange={(e) => setProfile({ ...profile, grad_year: e.target.value })}
                 required
-                min="1900"
-                max="2100"
                 className="w-full px-3 py-2 border border-border rounded-sm bg-white body-base focus:outline-none focus:ring-2"
-              />
+              >
+                <option value="">Select year</option>
+                {GRAD_YEARS.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
             </div>
           )}
 
