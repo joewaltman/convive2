@@ -10,7 +10,7 @@ interface FormState {
   chapter_id: string;
   venue_id: string;
   title: string;
-  starts_at: string; // "YYYY-MM-DD HH:mm" LA local
+  starts_at: string; // "YYYY-MM-DDTHH:mm" LA local (datetime-local input format)
   total_seats: string;
   price_cents: string;
   host_payout_cents: string;
@@ -23,7 +23,7 @@ interface FormState {
 }
 
 function formatLALocalInput(d: Date): string {
-  // Get the parts as LA local
+  // Get the parts as LA local, formatted for <input type="datetime-local">
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Los_Angeles',
     year: 'numeric',
@@ -35,7 +35,22 @@ function formatLALocalInput(d: Date): string {
   }).formatToParts(d);
   const m: Record<string, string> = {};
   for (const p of parts) m[p.type] = p.value;
-  return `${m.year}-${m.month}-${m.day} ${m.hour}:${m.minute}`;
+  // Intl can render hour as "24" at midnight; normalize to "00".
+  const hour = m.hour === '24' ? '00' : m.hour;
+  return `${m.year}-${m.month}-${m.day}T${hour}:${m.minute}`;
+}
+
+function defaultStartsAt(): string {
+  // Today at 6:00 PM in LA local time.
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const m: Record<string, string> = {};
+  for (const p of parts) m[p.type] = p.value;
+  return `${m.year}-${m.month}-${m.day}T18:00`;
 }
 
 function initial(dinner?: Dinner): FormState {
@@ -43,7 +58,7 @@ function initial(dinner?: Dinner): FormState {
     chapter_id: dinner ? String(dinner.chapter_id) : '',
     venue_id: dinner ? String(dinner.venue_id) : '',
     title: dinner?.title ?? '',
-    starts_at: dinner ? formatLALocalInput(dinner.starts_at) : '',
+    starts_at: dinner ? formatLALocalInput(dinner.starts_at) : defaultStartsAt(),
     total_seats: dinner ? String(dinner.total_seats) : '8',
     price_cents: dinner ? String(dinner.price_cents) : '0',
     host_payout_cents: dinner?.host_payout_cents != null ? String(dinner.host_payout_cents) : '',
@@ -173,13 +188,12 @@ export default function DinnerForm({
       </label>
 
       <label className="block">
-        <span className="block text-sm mb-1">Starts at (LA local: YYYY-MM-DD HH:mm) *</span>
+        <span className="block text-sm mb-1">Starts at (LA local) *</span>
         <input
-          type="text"
+          type="datetime-local"
           required
           value={form.starts_at}
           onChange={(e) => setField('starts_at', e.target.value)}
-          placeholder="2026-06-15 19:00"
           className="w-full border border-neutral-300 rounded px-3 py-2 text-sm"
         />
       </label>
@@ -187,10 +201,9 @@ export default function DinnerForm({
       <label className="block">
         <span className="block text-sm mb-1">Booking cutoff (LA local; optional)</span>
         <input
-          type="text"
+          type="datetime-local"
           value={form.booking_cutoff_at}
           onChange={(e) => setField('booking_cutoff_at', e.target.value)}
-          placeholder="2026-06-14 18:00"
           className="w-full border border-neutral-300 rounded px-3 py-2 text-sm"
         />
       </label>
