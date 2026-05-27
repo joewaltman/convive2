@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
   // Idempotency: insert the event id; if duplicate, short-circuit
   const inserted = await query<{ event_id: string }>(
-    `INSERT INTO processed_stripe_events (event_id, type)
+    `INSERT INTO processed_stripe_events (event_id, event_type)
      VALUES ($1, $2)
      ON CONFLICT (event_id) DO NOTHING
      RETURNING event_id`,
