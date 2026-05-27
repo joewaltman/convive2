@@ -178,7 +178,7 @@ async function sendPostDinnerBody(opts: {
         continue;
       }
       const { chapter } = bundle;
-      const chapterPageUrl = `${base}/${chapter.slug}`;
+      const chapterPageUrl = `${base}/alumni/${chapter.slug}`;
 
       if (opts.dryRun) {
         sent++;
