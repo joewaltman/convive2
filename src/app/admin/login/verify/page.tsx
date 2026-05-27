@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useState, type FormEvent } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 export default function AdminVerifyPage() {
   return (
@@ -12,7 +12,6 @@ export default function AdminVerifyPage() {
 }
 
 function AdminVerifyForm() {
-  const router = useRouter();
   const sp = useSearchParams();
   const initialEmail = sp.get('email') ?? '';
   const [email, setEmail] = useState(initialEmail);
@@ -36,7 +35,11 @@ function AdminVerifyForm() {
         setSubmitting(false);
         return;
       }
-      router.push('/admin');
+      // Hard navigation so the newly-set session cookie is included on
+      // the next request to /admin. router.push() reuses the client-side
+      // router cache, so the middleware would not see the cookie yet and
+      // would redirect back to /admin/login.
+      window.location.assign('/admin');
     } catch (err) {
       setError((err as Error).message);
       setSubmitting(false);

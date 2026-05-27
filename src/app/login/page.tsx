@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useState, type FormEvent } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 type Step = 'email' | 'code';
 
@@ -14,7 +14,6 @@ export default function LoginPage() {
 }
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const nextUrl = searchParams.get('next') ?? '/my-dinners';
 
@@ -64,7 +63,10 @@ function LoginForm() {
         setSubmitting(false);
         return;
       }
-      router.push(nextUrl);
+      // Hard navigation so the newly-set session cookie is included on
+      // the next request. router.push() reuses the client-side router
+      // cache and the destination page may not see the new session.
+      window.location.assign(nextUrl);
     } catch (err) {
       setError((err as Error).message);
       setSubmitting(false);
