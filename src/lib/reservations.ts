@@ -19,11 +19,14 @@ export interface StartReservationArgs {
 
 export type StartReservationResult =
   | { ok: true; reservation: Reservation }
-  | { ok: false; fullForBooking: true };
+  | { ok: false; fullForBooking: true }
+  | { ok: false; alreadyBooked: true };
 
 /**
  * Atomically check capacity and insert a pending reservation.
- * Returns { fullForBooking: true } if there isn't enough capacity.
+ * Returns { fullForBooking: true } if there isn't enough capacity, or
+ * { alreadyBooked: true } if this guest already has a confirmed or
+ * active pending reservation for this dinner.
  */
 export async function startReservation(args: StartReservationArgs): Promise<StartReservationResult> {
   const client = await pool.connect();
@@ -41,6 +44,19 @@ export async function startReservation(args: StartReservationArgs): Promise<Star
     );
     if (!dinnerRows.rows.length) throw new Error('Dinner not found');
     const dinner = dinnerRows.rows[0];
+
+    // Block duplicate bookings: confirmed, or pending whose hold hasn't expired.
+    const dupRows = await client.query<{ id: number }>(
+      `SELECT id FROM reservations
+       WHERE guest_id = $1 AND dinner_id = $2
+         AND (status = 'confirmed' OR (status = 'pending' AND pending_expires_at > NOW()))
+       LIMIT 1`,
+      [args.guestId, args.dinnerId],
+    );
+    if (dupRows.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return { ok: false, alreadyBooked: true };
+    }
 
     const usedRows = await client.query<{ used: string }>(
       `SELECT COALESCE(SUM(seat_count), 0)::text AS used

@@ -114,6 +114,9 @@ export async function POST(req: Request) {
   });
 
   if (!result.ok) {
+    if ('alreadyBooked' in result) {
+      return NextResponse.json({ alreadyBooked: true }, { status: 409 });
+    }
     return NextResponse.json({ fullForBooking: true });
   }
 

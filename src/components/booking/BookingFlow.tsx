@@ -219,6 +219,14 @@ export function BookingFlow({ chapter, dinner, guest }: BookingFlowProps) {
         return;
       }
 
+      if (data.alreadyBooked) {
+        setError(
+          "You're already booked for this dinner. Check your email for the confirmation, or contact us if you need help.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
       if (data.needsCode) {
         // Existing guest that needs verification
         const emailFromServer = typeof data.email === 'string' ? data.email : '';

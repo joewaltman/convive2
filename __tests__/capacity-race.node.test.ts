@@ -249,7 +249,7 @@ runWithMockDb('Capacity race condition (mocked DB)', () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
+    if (!result.ok && 'fullForBooking' in result) {
       expect(result.fullForBooking).toBe(true);
     }
 
