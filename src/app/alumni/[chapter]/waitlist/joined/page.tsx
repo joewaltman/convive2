@@ -33,7 +33,7 @@ export default async function WaitlistJoinedPage({ params }: PageProps) {
         </h1>
 
         <p className="body-lg text-body mb-8">
-          We will email you if a spot opens up. The claim window is 24 hours, so keep an eye on your inbox.
+          If a seat opens up, we will email you. You will have 24 hours to claim it before it is offered to the next person, so keep an eye on your inbox.
         </p>
 
         <Link

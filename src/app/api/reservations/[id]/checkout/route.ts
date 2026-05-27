@@ -5,7 +5,9 @@ import { getDinnerWithRelations } from '@/lib/dinners';
 import { stripe } from '@/lib/stripe';
 
 function baseUrl(): string {
-  return process.env.NEXT_PUBLIC_BASE_URL ?? 'https://con-vive.com';
+  const raw = (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://con-vive.com').trim();
+  const withScheme = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  return withScheme.replace(/\/+$/, '');
 }
 
 export async function POST(
@@ -45,6 +47,20 @@ export async function POST(
   );
   const guestEmail = guestRows[0]?.email;
 
+  // Per-chapter Stripe Checkout branding (preview field on 2025-09-30.clover).
+  // Only set fields that are valid hex / non-empty.
+  const HEX = /^#[0-9A-Fa-f]{6}$/;
+  const brandingSettings: Record<string, string> = {};
+  if (HEX.test(chapter.color_primary)) {
+    brandingSettings.background_color = chapter.color_primary;
+  }
+  if (HEX.test(chapter.color_accent)) {
+    brandingSettings.button_color = chapter.color_accent;
+  }
+  if (chapter.display_name) {
+    brandingSettings.display_name = chapter.display_name;
+  }
+
   const params2 = {
     mode: 'payment' as const,
     customer_email: guestEmail,
@@ -70,16 +86,24 @@ export async function POST(
       dinner_id: String(dinner.id),
       chapter_slug: chapter.slug,
     },
-    branding_settings: {
-      background_color: chapter.color_primary,
-      button_color: chapter.color_accent,
-      accent_color: chapter.color_accent,
-      brand_name: chapter.display_name,
-    },
+    ...(Object.keys(brandingSettings).length > 0
+      ? { branding_settings: brandingSettings }
+      : {}),
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const session = await (stripe.checkout.sessions.create as any)(params2);
+  let session: { id: string; url: string | null };
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    session = await (stripe.checkout.sessions.create as any)(params2);
+  } catch (err) {
+    console.error('stripe_checkout_create_failed', err);
+    const message = err instanceof Error ? err.message : 'stripe_error';
+    return NextResponse.json(
+      { error: 'stripe_error', detail: message },
+      { status: 502 },
+    );
+  }
+
   await attachCheckoutSession(reservation.id, session.id);
 
   return NextResponse.json({ checkout_url: session.url });

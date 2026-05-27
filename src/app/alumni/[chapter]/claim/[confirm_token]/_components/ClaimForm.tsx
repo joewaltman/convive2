@@ -22,19 +22,34 @@ export function ClaimForm({ reservationId, chapterSlug, price }: ClaimFormProps)
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
-      const data = await res.json();
+      const rawText = await res.text();
+      let data: Record<string, unknown> = {};
+      if (rawText) {
+        try {
+          data = JSON.parse(rawText) as Record<string, unknown>;
+        } catch {
+          throw new Error(
+            `Server error (HTTP ${res.status}). Please try again, and contact us if the problem persists.`,
+          );
+        }
+      } else if (!res.ok) {
+        throw new Error(
+          `Server error (HTTP ${res.status}). Please try again, and contact us if the problem persists.`,
+        );
+      }
 
       if (!res.ok) {
         if (data.error === 'expired') {
           setError('The claim window has expired. The seat has been offered to the next person.');
         } else {
-          throw new Error(data.error || 'Something went wrong');
+          const msg = typeof data.error === 'string' ? data.error : 'Something went wrong';
+          throw new Error(msg);
         }
         setIsSubmitting(false);
         return;
       }
 
-      if (data.checkout_url) {
+      if (typeof data.checkout_url === 'string') {
         window.location.href = data.checkout_url;
       }
     } catch (err) {

@@ -212,7 +212,7 @@ export function WaitlistFlow({ chapter, dinnerId, guest }: WaitlistFlowProps) {
         <p className="body-base text-body">
           {alreadyOnWaitlist
             ? "We already have you down. We will email you if a spot opens up."
-            : "We will email you if a spot opens up. The claim window is 24 hours."}
+            : "If a seat opens up, we will email you. You will have 24 hours to claim it before it is offered to the next person."}
         </p>
       </div>
     );
