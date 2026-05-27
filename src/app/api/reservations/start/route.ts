@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentGuest, createGuestSession } from '@/lib/auth/guest';
 import { getGuestByEmail, createGuest, type GuestInput } from '@/lib/guests';
-import { startReservation, attachCheckoutSession } from '@/lib/reservations';
+import { startReservation, attachCheckoutSession, cancelReservation } from '@/lib/reservations';
 import { getDinnerWithRelations } from '@/lib/dinners';
 import { stripe } from '@/lib/stripe';
 import type { Guest } from '@/lib/types';
@@ -121,8 +121,8 @@ export async function POST(req: Request) {
   const seatCount = reservation.seat_count;
   const amount = dinner.price_cents * seatCount;
 
-  // Stripe Checkout Session. branding_settings is a preview field not in current SDK
-  // types — cast the whole params object as any per spec to bypass type checks.
+  // Stripe Checkout Session. Branding (colors, logo, brand name) is configured
+  // in the Stripe Dashboard under Settings > Branding rather than per-session.
   const params = {
     mode: 'payment' as const,
     customer_email: guest.email,
@@ -148,12 +148,6 @@ export async function POST(req: Request) {
       dinner_id: String(dinner.id),
       chapter_slug: chapter.slug,
     },
-    branding_settings: {
-      background_color: chapter.color_primary,
-      button_color: chapter.color_accent,
-      accent_color: chapter.color_accent,
-      brand_name: chapter.display_name,
-    },
   };
 
   let session: { id: string; url: string | null };
@@ -162,6 +156,12 @@ export async function POST(req: Request) {
     session = await (stripe.checkout.sessions.create as any)(params);
   } catch (err) {
     console.error('stripe_checkout_create_failed', err);
+    // Release the seat hold we just created so it doesn't sit pending for 30 min.
+    try {
+      await cancelReservation(reservation.id);
+    } catch (cancelErr) {
+      console.error('reservation_cancel_after_stripe_failure_failed', cancelErr);
+    }
     const message = err instanceof Error ? err.message : 'stripe_error';
     return NextResponse.json(
       { error: 'stripe_error', detail: message },
