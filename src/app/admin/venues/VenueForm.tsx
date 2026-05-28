@@ -198,7 +198,11 @@ export default function VenueForm({ venue }: { venue?: Venue }) {
       <Text label="Address" value={form.address} onChange={(v) => setField('address', v)} />
       <Text label="Neighborhood" value={form.neighborhood} onChange={(v) => setField('neighborhood', v)} />
       <Text label="City" value={form.city} onChange={(v) => setField('city', v)} />
-      <Text label="Google Maps link" value={form.google_maps_link} onChange={(v) => setField('google_maps_link', v)} />
+      <Text
+        label="Google Maps link (optional override)"
+        value={form.google_maps_link}
+        onChange={(v) => setField('google_maps_link', v)}
+      />
       <Text label="Capacity min" value={form.capacity_min} onChange={(v) => setField('capacity_min', v)} />
       <Text label="Capacity max" value={form.capacity_max} onChange={(v) => setField('capacity_max', v)} />
       <div className="md:col-span-2">

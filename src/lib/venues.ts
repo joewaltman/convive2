@@ -76,3 +76,22 @@ export async function updateVenue(id: number, input: Partial<VenueInput>): Promi
 export async function deleteVenue(id: number): Promise<void> {
   await query(`DELETE FROM venues WHERE id = $1`, [id]);
 }
+
+/**
+ * Returns the Google Maps URL to use for a venue.
+ *
+ * Prefers an explicit `google_maps_link` if one is set (admin override).
+ * Otherwise builds a search URL from the address + city. Returns null when
+ * there is not enough address data to produce a useful link.
+ */
+export function venueMapsUrl(
+  v: Pick<Venue, 'google_maps_link' | 'name' | 'address' | 'neighborhood' | 'city'>,
+): string | null {
+  if (v.google_maps_link && v.google_maps_link.trim()) return v.google_maps_link;
+  const parts = [v.address, v.neighborhood, v.city].filter(
+    (s): s is string => typeof s === 'string' && s.trim().length > 0,
+  );
+  if (parts.length === 0) return null;
+  const q = encodeURIComponent(parts.join(', '));
+  return `https://www.google.com/maps/search/?api=1&query=${q}`;
+}

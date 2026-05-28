@@ -4,6 +4,7 @@ import { getChapterBySlug } from '@/lib/chapters';
 import { getReservationByCheckoutSession } from '@/lib/reservations';
 import { getDinnerWithRelations } from '@/lib/dinners';
 import { getGuestById } from '@/lib/guests';
+import { venueMapsUrl } from '@/lib/venues';
 import { formatLAClock } from '@/lib/time';
 import {
   generateGoogleCalendarUrl,
@@ -134,16 +135,19 @@ export default async function ReservationSuccessPage({
             {venue.name}
             {venue.address && `, ${venue.address}`}
           </p>
-          {venue.google_maps_link && (
-            <a
-              href={venue.google_maps_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="body-sm text-terracotta hover:underline"
-            >
-              View on Google Maps
-            </a>
-          )}
+          {(() => {
+            const mapsUrl = venueMapsUrl(venue);
+            return mapsUrl ? (
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="body-sm text-terracotta hover:underline"
+              >
+                View on Google Maps
+              </a>
+            ) : null;
+          })()}
         </div>
 
         {/* Calendar buttons */}

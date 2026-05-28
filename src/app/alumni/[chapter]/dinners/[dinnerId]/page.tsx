@@ -6,6 +6,7 @@ import {
   countSeatsUsed,
   countActiveWaitlist,
 } from '@/lib/dinners';
+import { venueMapsUrl } from '@/lib/venues';
 import { getCurrentGuest } from '@/lib/auth/guest';
 import { listReservationsForGuest } from '@/lib/reservations';
 import { formatLAClock } from '@/lib/time';
@@ -157,16 +158,19 @@ export default async function DinnerDetailPage({ params }: PageProps) {
           {showAddress && venue.address && (
             <p className="body-base text-body mt-1">{venue.address}</p>
           )}
-          {showAddress && venue.google_maps_link && (
-            <a
-              href={venue.google_maps_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="body-sm text-terracotta hover:underline mt-2 inline-block"
-            >
-              View on Google Maps
-            </a>
-          )}
+          {showAddress && (() => {
+            const mapsUrl = venueMapsUrl(venue);
+            return mapsUrl ? (
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="body-sm text-terracotta hover:underline mt-2 inline-block"
+              >
+                View on Google Maps
+              </a>
+            ) : null;
+          })()}
         </section>
 
         {/* Menu */}
