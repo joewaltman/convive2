@@ -114,41 +114,31 @@ export default async function HomePage() {
       {/* 5. About Joe */}
       <section className="py-24 md:py-32 border-b border-border">
         <div className="max-w-6xl mx-auto px-6">
-          <p className="eyebrow mb-4">About</p>
-          <h2 className="heading-1 mb-12">Run by one operator.</h2>
-          <div className="grid md:grid-cols-3 gap-12 items-start">
-            <div className="md:col-span-1">
-              <Image
-                src="/joe-headshot.jpg"
-                alt="Joe Waltman"
-                width={1459}
-                height={1574}
-                className="w-full max-w-[240px] h-auto rounded-sm"
-              />
-            </div>
-            <div className="md:col-span-2 max-w-2xl">
-              <p className="body-lg text-body mb-6">
-                I am Joe. I run Con-Vive because I believe in the power of small, intentional
-                gatherings. Before this, I spent years building community programs and
-                realized that the hardest part is always the logistics. Good intentions get
-                lost in the details.
-              </p>
-              <p className="body-lg text-body mb-6">
-                Con-Vive handles the details so that chapter volunteers can focus on what
-                matters: bringing people together. Every dinner, I am behind the scenes
-                making sure the venue is ready, payments are processed, and guests know
-                where to go.
-              </p>
-              <p className="body-base text-warm-gray">
-                Questions? Reach me at{' '}
-                <a
-                  href="mailto:joe@con-vive.com"
-                  className="text-terracotta hover:underline"
-                >
-                  joe@con-vive.com
-                </a>
-              </p>
-            </div>
+          <p className="eyebrow mb-4">Why we exist</p>
+          <h2 className="heading-1 mb-12">More tables, fewer mixers.</h2>
+          <div className="max-w-3xl">
+            <p className="body-lg text-body mb-6">
+              The best alumni connections rarely happen at a packed happy hour. They happen
+              at a table of eight, over a long dinner, with people you might not have met
+              otherwise. But those dinners are also the hardest events to organize, and
+              that is exactly why most chapters default to easier formats.
+            </p>
+            <p className="body-lg text-body mb-6">
+              Con-Vive exists to change that. We have built a platform that handles every
+              piece of the operation, including venues, scheduling, payments, reminders,
+              and waitlists, so chapter leaders can produce a steady cadence of small
+              dinners without the overhead. Your members get the experience. Your chapter
+              gets the credit.
+            </p>
+            <p className="body-base text-warm-gray">
+              Reach us at{' '}
+              <a
+                href="mailto:joe@con-vive.com"
+                className="text-terracotta hover:underline"
+              >
+                joe@con-vive.com
+              </a>
+            </p>
           </div>
         </div>
       </section>
@@ -164,7 +154,7 @@ export default async function HomePage() {
               per seat, and that covers the venue and our operating costs.
             </FaqItem>
             <FaqItem question="Who actually runs the dinners?">
-              We do. Joe handles venue coordination, payments, guest communications,
+              We do. Our team handles venue coordination, payments, guest communications,
               confirmations, and reminders. Your volunteers do not need to manage anything
               on the day of.
             </FaqItem>
