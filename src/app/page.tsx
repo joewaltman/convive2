@@ -1,18 +1,7 @@
 import Image from 'next/image';
-import { listPublicVenues } from '@/lib/venues';
-import type { Venue } from '@/lib/types';
 import { ChapterLeadForm } from './_components/ChapterLeadForm';
 
-// Force runtime rendering so the build doesn't try to query Postgres
-// (DB hostname only resolves at runtime on Railway).
-export const dynamic = 'force-dynamic';
-
 export default async function HomePage() {
-  const venues = await listPublicVenues();
-  const restaurants = venues.filter((v) => v.venue_type === 'restaurant');
-  const eventSpaces = venues.filter((v) => v.venue_type === 'event_space');
-  const homes = venues.filter((v) => v.venue_type === 'home');
-
   const calendlyUrl = process.env.CALENDLY_URL || 'https://calendly.com/joewaltman/15min';
 
   return (
@@ -121,33 +110,6 @@ export default async function HomePage() {
           </p>
         </div>
       </section>
-
-      {/* 4. Sample venues */}
-      {(restaurants.length > 0 || eventSpaces.length > 0 || homes.length > 0) && (
-        <section className="py-24 md:py-32 border-b border-border">
-          <div className="max-w-6xl mx-auto px-6">
-            <p className="eyebrow mb-4">Sample venues</p>
-            <h2 className="heading-1 mb-12">Where the dinners happen.</h2>
-
-            {restaurants.length > 0 && (
-              <VenueGroup
-                title="Restaurants with private dining"
-                venues={restaurants}
-              />
-            )}
-            {eventSpaces.length > 0 && (
-              <VenueGroup title="Event spaces" venues={eventSpaces} />
-            )}
-            {homes.length > 0 && (
-              <VenueGroup
-                title="Private homes hosted by alumni"
-                venues={homes}
-              />
-            )}
-
-          </div>
-        </section>
-      )}
 
       {/* 5. About Joe */}
       <section className="py-24 md:py-32 border-b border-border">
@@ -321,55 +283,6 @@ function Step({ number, title, children }: { number: number; title: string; chil
       <div>
         <h3 className="heading-3 mb-2">{title}</h3>
         <p className="body-base text-body">{children}</p>
-      </div>
-    </div>
-  );
-}
-
-function VenueGroup({ title, venues }: { title: string; venues: Venue[] }) {
-  return (
-    <div className="mb-12">
-      <h3 className="heading-3 mb-6">{title}</h3>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {venues.map((venue) => (
-          <VenueCard key={venue.id} venue={venue} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function VenueCard({ venue }: { venue: Venue }) {
-  return (
-    <div className="bg-surface rounded-sm overflow-hidden">
-      <div className="aspect-[4/3] bg-border relative">
-        {venue.photo_url ? (
-          <Image
-            src={venue.photo_url}
-            alt={venue.name}
-            fill
-            className="object-cover"
-          />
-        ) : (
-          <Image
-            src="/venue-placeholder.svg"
-            alt=""
-            fill
-            className="object-cover"
-          />
-        )}
-      </div>
-      <div className="p-4">
-        {venue.neighborhood && (
-          <p className="eyebrow mb-1">{venue.neighborhood}</p>
-        )}
-        <h4 className="heading-3 text-lg mb-2">{venue.name}</h4>
-        <p className="body-sm text-warm-gray mb-2">
-          Seats {venue.capacity_min} to {venue.capacity_max}
-        </p>
-        {venue.description && (
-          <p className="body-sm text-body line-clamp-2">{venue.description}</p>
-        )}
       </div>
     </div>
   );
