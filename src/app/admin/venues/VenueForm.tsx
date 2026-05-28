@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Venue, VenueType } from '@/lib/types';
+import { VenuePhotoField } from './VenuePhotoField';
 
 interface VenueFormState {
   name: string;
@@ -200,7 +201,9 @@ export default function VenueForm({ venue }: { venue?: Venue }) {
       <Text label="Google Maps link" value={form.google_maps_link} onChange={(v) => setField('google_maps_link', v)} />
       <Text label="Capacity min" value={form.capacity_min} onChange={(v) => setField('capacity_min', v)} />
       <Text label="Capacity max" value={form.capacity_max} onChange={(v) => setField('capacity_max', v)} />
-      <Text label="Photo URL" value={form.photo_url} onChange={(v) => setField('photo_url', v)} />
+      <div className="md:col-span-2">
+        <VenuePhotoField value={form.photo_url} onChange={(v) => setField('photo_url', v)} />
+      </div>
       <label className="block md:col-span-2">
         <span className="block text-sm mb-1">Description</span>
         <textarea

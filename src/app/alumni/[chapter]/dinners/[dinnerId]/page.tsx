@@ -123,6 +123,16 @@ export default async function DinnerDetailPage({ params }: PageProps) {
           Back to dinners
         </Link>
 
+        {/* Venue photo */}
+        {venue.photo_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={venue.photo_url}
+            alt={venue.name}
+            className="w-full aspect-[4/3] object-cover rounded mb-6"
+          />
+        ) : null}
+
         {/* Eyebrow: city */}
         <p className="eyebrow mb-2">{venue.city || 'Location TBA'}</p>
 
