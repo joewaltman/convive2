@@ -78,16 +78,8 @@ function DinnerCard({
     maximumFractionDigits: 0,
   });
 
-  // Build venue display per privacy rules:
-  // - Home venue: city only
-  // - Restaurant/event-space: name + city
-  let venueDisplay: string;
-  if (dinner.venue_type === 'home') {
-    venueDisplay = dinner.city || 'Location TBA';
-  } else {
-    const parts = [dinner.venue_display_name, dinner.city].filter(Boolean);
-    venueDisplay = parts.join(', ') || 'Location TBA';
-  }
+  // Show the neighborhood. Fall back to city if neighborhood is not set.
+  const venueDisplay = dinner.neighborhood || dinner.city || 'Location TBA';
 
   // Seat status display
   let seatStatus: React.ReactNode;

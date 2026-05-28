@@ -14,13 +14,14 @@ export interface PublicDinnerCard {
   allows_couples: boolean;
   booking_cutoff_at: Date | null;
   city: string | null;
+  neighborhood: string | null;
   venue_type: Venue['venue_type'];
   venue_display_name: string | null; // restaurant or event-space name; null for home
   seats_used: number;
   waitlist_count: number;
 }
 
-/** Public list: restaurant/event-space name + city; home venues show city only. */
+/** Public list: shows neighborhood (falling back to city). */
 export async function listPublicUpcomingByChapter(chapterId: number): Promise<PublicDinnerCard[]> {
   const rows = await query<{
     id: number;
@@ -31,6 +32,7 @@ export async function listPublicUpcomingByChapter(chapterId: number): Promise<Pu
     allows_couples: boolean;
     booking_cutoff_at: Date | null;
     city: string | null;
+    neighborhood: string | null;
     venue_type: Venue['venue_type'];
     venue_name: string;
     seats_used: string | null;
@@ -38,7 +40,7 @@ export async function listPublicUpcomingByChapter(chapterId: number): Promise<Pu
   }>(
     `SELECT d.id, d.title, d.starts_at, d.total_seats, d.price_cents, d.allows_couples,
             d.booking_cutoff_at,
-            v.city, v.venue_type, v.name AS venue_name,
+            v.city, v.neighborhood, v.venue_type, v.name AS venue_name,
             COALESCE((SELECT SUM(seat_count) FROM reservations r
               WHERE r.dinner_id = d.id
                 AND (r.status = 'confirmed'
@@ -62,6 +64,7 @@ export async function listPublicUpcomingByChapter(chapterId: number): Promise<Pu
     allows_couples: r.allows_couples,
     booking_cutoff_at: r.booking_cutoff_at,
     city: r.city,
+    neighborhood: r.neighborhood,
     venue_type: r.venue_type,
     venue_display_name: r.venue_type === 'home' ? null : r.venue_name,
     seats_used: parseInt(r.seats_used ?? '0', 10),
