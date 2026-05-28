@@ -71,8 +71,9 @@ export default async function DinnerDetailPage({ params }: PageProps) {
 
   // Build venue display per privacy rules:
   // - If guest has confirmed reservation: show full address
-  // - Home venue: city + host first name + grad year
-  // - Restaurant/event-space: name + city (no address)
+  // - Home venue: neighborhood + host first name + grad year
+  // - Restaurant/event-space: name + neighborhood (no address)
+  const area = venue.neighborhood || venue.city;
   let venueDisplay: string;
   let showAddress = false;
 
@@ -83,9 +84,9 @@ export default async function DinnerDetailPage({ params }: PageProps) {
     const hostInfo = host_first_name
       ? `Hosted by ${host_first_name}${host_grad_year ? `, '${String(host_grad_year).slice(-2)}` : ''}`
       : 'Hosted by a fellow alum';
-    venueDisplay = `${hostInfo}, in ${venue.city || 'the area'}`;
+    venueDisplay = `${hostInfo}, in ${area || 'the area'}`;
   } else {
-    venueDisplay = [venue.name, venue.city].filter(Boolean).join(', ') || 'Venue TBA';
+    venueDisplay = [venue.name, area].filter(Boolean).join(', ') || 'Venue TBA';
   }
 
   // Determine CTA state
