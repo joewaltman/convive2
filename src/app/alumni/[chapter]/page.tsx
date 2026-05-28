@@ -36,10 +36,10 @@ export default async function ChapterPage({ params }: PageProps) {
 
         {/* Upcoming dinners */}
         <section>
-          <h3 className="heading-2 mb-8">Upcoming dinners</h3>
+          <h3 className="heading-2 mb-8">What&rsquo;s coming up</h3>
           {dinners.length === 0 ? (
             <p className="body-base text-body">
-              No upcoming dinners at this time. Check back soon.
+              Nothing on the calendar right now. Check back soon.
             </p>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
