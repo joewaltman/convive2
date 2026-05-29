@@ -154,7 +154,7 @@ describe('Reminder email with 26 attendees', () => {
     const block = renderCompanionBlock(noMajorGuest);
 
     expect(block).not.toBeNull();
-    expect(block!.line1).toBe("Alice NoMajor, Class of '15");
+    expect(block!.line1).toBe("Alice, Class of '15");
     expect(block!.line2).toBe('Product manager at a startup.');
   });
 
@@ -163,7 +163,7 @@ describe('Reminder email with 26 attendees', () => {
     const block = renderCompanionBlock(noBioGuest);
 
     expect(block).not.toBeNull();
-    expect(block!.line1).toBe("Bob NoBio, Class of '16, Physics");
+    expect(block!.line1).toBe("Bob, Class of '16, Physics");
     expect(block!.line2).toBeNull();
   });
 
@@ -172,7 +172,7 @@ describe('Reminder email with 26 attendees', () => {
     const block = renderCompanionBlock(minimalGuest);
 
     expect(block).not.toBeNull();
-    expect(block!.line1).toBe("Carol Minimal, Class of '14");
+    expect(block!.line1).toBe("Carol, Class of '14");
     expect(block!.line2).toBeNull();
   });
 
@@ -196,12 +196,11 @@ describe('Reminder email with 26 attendees', () => {
     expect(block!.line1).toBe("JustFirst, Class of '15, Economics");
   });
 
-  test('renderCompanionBlock handles only last name', () => {
+  test('renderCompanionBlock returns null when only last name is set', () => {
+    // First-name-only display: guests without a first name are dropped from the list.
     const lastOnlyGuest = attendees.find((a) => a.guest_id === 7)!;
     const block = renderCompanionBlock(lastOnlyGuest);
-
-    expect(block).not.toBeNull();
-    expect(block!.line1).toBe("JustLast, Class of '16, History");
+    expect(block).toBeNull();
   });
 
   test('full DinnerReminder rendering with 26 attendees - snapshot', () => {

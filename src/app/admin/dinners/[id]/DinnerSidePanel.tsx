@@ -26,12 +26,32 @@ interface WaitlistItem {
   created_at: string;
 }
 
+interface SurveyItem {
+  id: number;
+  reservation_id: number;
+  guest_first_name: string;
+  guest_last_name: string;
+  venue_rating: number;
+  food_rating: number;
+  value_rating: number;
+  feedback: string | null;
+  submitted_at: string;
+}
+
+function avg(nums: number[]): string {
+  if (nums.length === 0) return '—';
+  const m = nums.reduce((a, b) => a + b, 0) / nums.length;
+  return m.toFixed(1);
+}
+
 export default function DinnerSidePanel({
   reservations,
   waitlist,
+  surveys,
 }: {
   reservations: ReservationItem[];
   waitlist: WaitlistItem[];
+  surveys: SurveyItem[];
 }) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<number | null>(null);
@@ -130,6 +150,40 @@ export default function DinnerSidePanel({
             <p className="p-2 text-xs text-neutral-500">Empty.</p>
           ) : null}
         </div>
+      </section>
+
+      <section>
+        <h3 className="text-sm font-semibold mb-2">Survey responses ({surveys.length})</h3>
+        {surveys.length > 0 ? (
+          <div className="border border-neutral-200 rounded divide-y">
+            <div className="p-2 text-xs bg-neutral-50">
+              <div className="font-medium">Averages</div>
+              <div className="text-neutral-600">
+                Venue {avg(surveys.map((s) => s.venue_rating))} ·{' '}
+                Food {avg(surveys.map((s) => s.food_rating))} ·{' '}
+                Value {avg(surveys.map((s) => s.value_rating))}
+              </div>
+            </div>
+            {surveys.map((s) => (
+              <div key={s.id} className="p-2 text-xs">
+                <div className="font-medium">{s.guest_first_name} {s.guest_last_name}</div>
+                <div className="text-neutral-500">
+                  Venue {s.venue_rating} · Food {s.food_rating} · Value {s.value_rating}
+                </div>
+                {s.feedback ? (
+                  <p className="mt-1 text-neutral-700 whitespace-pre-wrap">{s.feedback}</p>
+                ) : null}
+                <div className="text-neutral-400 mt-1">
+                  {new Date(s.submitted_at).toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="p-2 text-xs text-neutral-500 border border-neutral-200 rounded">
+            No responses yet.
+          </p>
+        )}
       </section>
     </div>
   );

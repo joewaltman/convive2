@@ -3,6 +3,7 @@ import { requireSuperAdmin } from '@/lib/auth/admin';
 import { getDinnerByIdAdmin } from '@/lib/dinners';
 import { listAllChapters } from '@/lib/chapters';
 import { listAllVenues } from '@/lib/venues';
+import { listSurveysForDinner } from '@/lib/surveys';
 import { query } from '@/lib/db';
 import { formatLAClock } from '@/lib/time';
 import DinnerForm from '../DinnerForm';
@@ -47,7 +48,7 @@ export default async function EditDinnerPage({
   ]);
   if (!dinner) notFound();
 
-  const [reservations, waitlist] = await Promise.all([
+  const [reservations, waitlist, surveys] = await Promise.all([
     query<ReservationRow>(
       `SELECT r.id, r.guest_id, g.email AS guest_email, g.first_name AS guest_first_name,
               g.last_name AS guest_last_name, r.status, r.seat_count, r.brings_partner,
@@ -67,6 +68,7 @@ export default async function EditDinnerPage({
        ORDER BY we.created_at ASC`,
       [n],
     ),
+    listSurveysForDinner(n),
   ]);
 
   return (
@@ -88,6 +90,10 @@ export default async function EditDinnerPage({
             waitlist={waitlist.map((w) => ({
               ...w,
               created_at: w.created_at.toISOString(),
+            }))}
+            surveys={surveys.map((s) => ({
+              ...s,
+              submitted_at: s.submitted_at.toISOString(),
             }))}
           />
         </div>

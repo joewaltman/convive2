@@ -5,7 +5,7 @@ import type { PoolClient } from 'pg';
 
 const COLS = `id, guest_id, dinner_id, chapter_id, grad_year, major, brings_partner, seat_count,
   status, amount_paid_cents, stripe_checkout_session_id, stripe_payment_intent_id,
-  confirm_token, cancel_token, calendar_token, pending_expires_at, waitlist_entry_id,
+  confirm_token, cancel_token, calendar_token, survey_token, pending_expires_at, waitlist_entry_id,
   booked_at, confirmed_at, cancelled_at, reminder_sent_at, post_dinner_sent_at,
   created_at, updated_at`;
 
@@ -78,13 +78,14 @@ export async function startReservation(args: StartReservationArgs): Promise<Star
       confirm_token: generateUrlSafeToken(),
       cancel_token: generateUrlSafeToken(),
       calendar_token: generateUrlSafeToken(),
+      survey_token: generateUrlSafeToken(),
     };
 
     const ins = await client.query<Reservation>(
       `INSERT INTO reservations (guest_id, dinner_id, chapter_id, grad_year, major,
          brings_partner, seat_count, status, confirm_token, cancel_token, calendar_token,
-         pending_expires_at, booked_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10,
+         survey_token, pending_expires_at, booked_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10, $11,
                NOW() + INTERVAL '30 minutes', NOW())
        RETURNING ${COLS}`,
       [
@@ -98,6 +99,7 @@ export async function startReservation(args: StartReservationArgs): Promise<Star
         tokens.confirm_token,
         tokens.cancel_token,
         tokens.calendar_token,
+        tokens.survey_token,
       ],
     );
 
@@ -135,6 +137,14 @@ export async function getReservationByCancelToken(token: string): Promise<Reserv
 export async function getReservationByCalendarToken(token: string): Promise<Reservation | null> {
   const rows = await query<Reservation>(
     `SELECT ${COLS} FROM reservations WHERE calendar_token = $1`,
+    [token],
+  );
+  return rows[0] ?? null;
+}
+
+export async function getReservationBySurveyToken(token: string): Promise<Reservation | null> {
+  const rows = await query<Reservation>(
+    `SELECT ${COLS} FROM reservations WHERE survey_token = $1`,
     [token],
   );
   return rows[0] ?? null;
@@ -294,14 +304,15 @@ export async function promoteOldestPendingInTx(
     confirm_token: generateUrlSafeToken(),
     cancel_token: generateUrlSafeToken(),
     calendar_token: generateUrlSafeToken(),
+    survey_token: generateUrlSafeToken(),
   };
 
   const newRes = await client.query<Reservation>(
     `INSERT INTO reservations (guest_id, dinner_id, chapter_id, grad_year, major,
        brings_partner, seat_count, status, confirm_token, cancel_token, calendar_token,
-       pending_expires_at, waitlist_entry_id, booked_at)
-     VALUES ($1, $2, $3, $4, $5, false, 1, 'pending', $6, $7, $8,
-             NOW() + INTERVAL '24 hours', $9, NOW())
+       survey_token, pending_expires_at, waitlist_entry_id, booked_at)
+     VALUES ($1, $2, $3, $4, $5, false, 1, 'pending', $6, $7, $8, $9,
+             NOW() + INTERVAL '24 hours', $10, NOW())
      RETURNING ${COLS}`,
     [
       entry.guest_id,
@@ -312,6 +323,7 @@ export async function promoteOldestPendingInTx(
       tokens.confirm_token,
       tokens.cancel_token,
       tokens.calendar_token,
+      tokens.survey_token,
       entry.id,
     ],
   );

@@ -54,13 +54,11 @@ export function trimWhatDoYouDo(text: string | null): string | null {
 
 export function renderCompanionBlock(a: AttendeeForReminder): CompanionBlock | null {
   const firstName = a.first_name?.trim() || null;
-  const lastName = a.last_name?.trim() || null;
-  if (!firstName && !lastName) return null;
+  if (!firstName) return null;
 
-  const name = [firstName, lastName].filter(Boolean).join(' ');
   const classPart = `Class of '${String(a.grad_year).slice(-2)}`;
   const majorPart = a.major?.trim();
-  const line1 = majorPart ? `${name}, ${classPart}, ${majorPart}` : `${name}, ${classPart}`;
+  const line1 = majorPart ? `${firstName}, ${classPart}, ${majorPart}` : `${firstName}, ${classPart}`;
   const line2 = trimWhatDoYouDo(a.what_do_you_do);
   return { line1, line2 };
 }

@@ -195,6 +195,7 @@ async function expirePromotedEntry(entryId: number): Promise<{ nextPromotion: Ne
       const confirmToken = generateToken();
       const cancelToken = generateToken();
       const calendarToken = generateToken();
+      const surveyToken = generateToken();
 
       // Get guest profile for grad_year and major
       const guestProfile = await client.query(
@@ -208,10 +209,10 @@ async function expirePromotedEntry(entryId: number): Promise<{ nextPromotion: Ne
         `INSERT INTO reservations (
            guest_id, dinner_id, chapter_id, grad_year, major, brings_partner,
            seat_count, status, confirm_token, cancel_token, calendar_token,
-           pending_expires_at, waitlist_entry_id
-         ) VALUES ($1, $2, $3, $4, NULL, FALSE, 1, 'pending', $5, $6, $7, NOW() + INTERVAL '24 hours', $8)
+           survey_token, pending_expires_at, waitlist_entry_id
+         ) VALUES ($1, $2, $3, $4, NULL, FALSE, 1, 'pending', $5, $6, $7, $8, NOW() + INTERVAL '24 hours', $9)
          RETURNING id`,
-        [nextGuestId, dinner_id, chapterId, gradYear, confirmToken, cancelToken, calendarToken, nextEntryId],
+        [nextGuestId, dinner_id, chapterId, gradYear, confirmToken, cancelToken, calendarToken, surveyToken, nextEntryId],
       );
 
       nextPromotion = {

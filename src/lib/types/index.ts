@@ -100,6 +100,7 @@ export interface Reservation {
   confirm_token: string;
   cancel_token: string;
   calendar_token: string;
+  survey_token: string;
   pending_expires_at: Date | null;
   waitlist_entry_id: number | null;
   booked_at: Date | null;

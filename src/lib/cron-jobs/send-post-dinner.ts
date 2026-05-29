@@ -13,6 +13,7 @@ interface CandidateRow {
   guest_email: string;
   guest_unsub: Date | null;
   dinner_id: number;
+  survey_token: string;
 }
 
 export async function sendPostDinnerBody(opts: {
@@ -54,7 +55,7 @@ export async function sendPostDinnerBody(opts: {
 
   const candidates = await query<CandidateRow>(
     `SELECT r.id AS reservation_id, r.guest_id, g.email AS guest_email,
-            g.email_unsubscribed_at AS guest_unsub, r.dinner_id
+            g.email_unsubscribed_at AS guest_unsub, r.dinner_id, r.survey_token
      FROM reservations r
      JOIN dinners d ON d.id = r.dinner_id
      JOIN guests g ON g.id = r.guest_id
@@ -92,6 +93,7 @@ export async function sendPostDinnerBody(opts: {
       }
       const { chapter } = bundle;
       const chapterPageUrl = `${base}/alumni/${chapter.slug}`;
+      const surveyUrl = `${base}/alumni/${chapter.slug}/survey/${row.survey_token}`;
 
       if (opts.dryRun) {
         sent++;
@@ -107,6 +109,7 @@ export async function sendPostDinnerBody(opts: {
           chapterDisplayName: chapter.display_name,
           chapterAccent: chapter.color_accent,
           chapterPageUrl,
+          surveyUrl,
           unsubscribeUrl: unsubscribeUrl(row.guest_id),
         }),
         headers: bulkHeaders(unsubscribeUrl(row.guest_id)),
