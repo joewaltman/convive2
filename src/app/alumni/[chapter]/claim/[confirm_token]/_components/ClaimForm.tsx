@@ -10,11 +10,16 @@ interface ClaimFormProps {
 
 export function ClaimForm({ reservationId, chapterSlug, price }: ClaimFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState('');
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
+    if (!agreedToTerms) {
+      setError('Please agree to the Terms of Service before continuing.');
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -60,6 +65,29 @@ export function ClaimForm({ reservationId, chapterSlug, price }: ClaimFormProps)
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Terms of Service agreement */}
+      <label className="flex items-start gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={agreedToTerms}
+          onChange={(e) => setAgreedToTerms(e.target.checked)}
+          className="w-5 h-5 mt-0.5 rounded border-border text-ink focus:ring-2 flex-shrink-0"
+        />
+        <span className="body-sm text-body">
+          I agree to the{' '}
+          <a
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-terracotta hover:underline"
+          >
+            Terms of Service
+          </a>
+          , including the cancellation policy (full refund up to 48 hours before
+          the dinner; no refund inside 48 hours or for no-shows).
+        </span>
+      </label>
+
       {error && (
         <div className="bg-terracotta/10 border border-terracotta/20 rounded-sm p-4">
           <p className="body-sm text-terracotta">{error}</p>
@@ -68,7 +96,7 @@ export function ClaimForm({ reservationId, chapterSlug, price }: ClaimFormProps)
 
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || !agreedToTerms}
         className="w-full px-8 py-4 rounded-sm body-base font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
         style={{ backgroundColor: 'var(--chapter-accent)' }}
       >

@@ -67,6 +67,7 @@ export function BookingFlow({ chapter, dinner, guest }: BookingFlowProps) {
     dietary_restrictions: guest?.dietary_restrictions || [],
   });
   const [bringsPartner, setBringsPartner] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [currentGuest, setCurrentGuest] = useState<Guest | null>(guest);
@@ -170,6 +171,10 @@ export function BookingFlow({ chapter, dinner, guest }: BookingFlowProps) {
   async function handleConfirmSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
+    if (!agreedToTerms) {
+      setError('Please agree to the Terms of Service before continuing.');
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -559,11 +564,34 @@ export function BookingFlow({ chapter, dinner, guest }: BookingFlowProps) {
             </div>
           </div>
 
+          {/* Terms of Service agreement */}
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={agreedToTerms}
+              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              className="w-5 h-5 mt-0.5 rounded border-border text-ink focus:ring-2 flex-shrink-0"
+            />
+            <span className="body-sm text-body">
+              I agree to the{' '}
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-terracotta hover:underline"
+              >
+                Terms of Service
+              </a>
+              , including the cancellation policy (full refund up to 48 hours before
+              the dinner; no refund inside 48 hours or for no-shows).
+            </span>
+          </label>
+
           {error && <p className="body-sm text-terracotta">{error}</p>}
 
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !agreedToTerms}
             className="w-full px-6 py-4 rounded-sm body-base font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
             style={primaryButtonStyle}
           >

@@ -254,9 +254,14 @@ export default async function HomePage() {
             <p className="body-sm text-warm-gray">
               &copy; {new Date().getFullYear()} Con-Vive. All rights reserved.
             </p>
-            <a href="/privacy" className="body-sm text-warm-gray hover:text-terracotta">
-              Privacy Policy
-            </a>
+            <div className="flex gap-4">
+              <a href="/privacy" className="body-sm text-warm-gray hover:text-terracotta">
+                Privacy Policy
+              </a>
+              <a href="/terms" className="body-sm text-warm-gray hover:text-terracotta">
+                Terms of Service
+              </a>
+            </div>
           </div>
         </div>
       </footer>
