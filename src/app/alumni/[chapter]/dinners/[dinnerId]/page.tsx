@@ -69,33 +69,18 @@ export default async function DinnerDetailPage({ params }: PageProps) {
     maximumFractionDigits: 0,
   });
 
-  // Build venue display per privacy rules:
-  // - If guest has confirmed reservation: show full address
-  // - Home venue: neighborhood + host first name + grad year
-  // - Restaurant/event-space: name + neighborhood (no address)
-  const area = venue.neighborhood || venue.city;
-  let venueDisplay: string;
-  let showAddress = false;
+  const area = venue.neighborhood || venue.city || 'Location TBA';
 
-  if (hasConfirmedReservation && venue.address) {
-    venueDisplay = venue.name;
-    showAddress = true;
-  } else if (venue.venue_type === 'home') {
-    const hostInfo = host_first_name
-      ? `Hosted by ${host_first_name}${host_grad_year ? `, '${String(host_grad_year).slice(-2)}` : ''}`
-      : 'Hosted by a fellow alum';
-    venueDisplay = `${hostInfo}, in ${area || 'the area'}`;
-  } else {
-    venueDisplay = area || 'Venue TBA';
-  }
-
-  // Confirmed attendees ("Who's coming"). Always fetched; the rendering decides
-  // which fields are exposed based on hasConfirmedReservation.
+  // Attendees + chef
   const attendees = await listConfirmedAttendees(dinnerId);
   const chefName = dinner.chef_name ?? venue.chef_name;
   const aboutChef = dinner.about_chef ?? venue.about_chef;
 
-  // Determine CTA state
+  // Hero / gallery split
+  const hero = photos[0] ?? null;
+  const galleryRest = photos.slice(1);
+
+  // CTA state
   let ctaState: 'reserve' | 'waitlist' | 'closed';
   if (isPast || !isPublished || isPastCutoff) {
     ctaState = 'closed';
@@ -105,247 +90,304 @@ export default async function DinnerDetailPage({ params }: PageProps) {
     ctaState = 'reserve';
   }
 
-  return (
-    <div className="py-12 md:py-16">
-      <div className="max-w-3xl mx-auto px-6">
-        {/* Back link */}
-        <Link
-          href={`/alumni/${slug}`}
-          className="inline-flex items-center body-sm text-warm-gray hover:text-ink mb-8"
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            className="mr-1"
-          >
-            <path
-              d="M10 12L6 8L10 4"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Back to dinners
-        </Link>
+  const mapsUrl = venueMapsUrl(venue);
 
-        {/* Venue photo gallery */}
-        {photos.length > 0 ? (
-          <div className="mb-6">
+  return (
+    <div className="max-w-3xl mx-auto px-6 py-12 md:py-16">
+      {/* Back link */}
+      <Link
+        href={`/alumni/${slug}`}
+        className="inline-flex items-center body-sm text-warm-gray hover:text-ink mb-8"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          className="mr-1"
+        >
+          <path
+            d="M10 12L6 8L10 4"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        Back to dinners
+      </Link>
+
+      <article className="bg-white border border-border rounded-lg overflow-hidden">
+        {/* 1. HERO */}
+        {hero ? (
+          <div className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={photos[0].url}
-              alt={photos[0].caption ?? dinner.title}
-              className="w-full aspect-[4/3] object-cover rounded"
+              src={hero.url}
+              alt={hero.caption ?? dinner.title}
+              className="w-full aspect-[16/9] object-cover"
             />
-            {photos.length > 1 ? (
-              <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {photos.slice(1).map((p) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={p.id}
-                    src={p.url}
-                    alt={p.caption ?? dinner.title}
-                    className="w-full aspect-[4/3] object-cover rounded"
-                  />
-                ))}
-              </div>
-            ) : null}
+            <span
+              className="absolute top-3 left-3 px-3 py-1 rounded-md body-sm font-medium text-white"
+              style={{ backgroundColor: 'var(--chapter-primary)' }}
+            >
+              {area}
+            </span>
+            {!hasConfirmedReservation && venue.venue_type !== 'home' && (
+              <span className="absolute bottom-3 left-3 px-3 py-1 rounded-md body-sm bg-white/90 text-body border border-border">
+                Exact venue shared when you reserve
+              </span>
+            )}
           </div>
-        ) : null}
+        ) : (
+          <div className="h-28 bg-surface relative flex items-end">
+            <span
+              className="m-3 px-3 py-1 rounded-md body-sm font-medium text-white"
+              style={{ backgroundColor: 'var(--chapter-primary)' }}
+            >
+              {area}
+            </span>
+          </div>
+        )}
 
-        {/* Eyebrow: city */}
-        <p className="eyebrow mb-2">{venue.city || 'Location TBA'}</p>
-
-        {/* Title */}
-        <h1
-          className="heading-1 mb-4"
-          style={{ color: 'var(--chapter-primary)' }}
-        >
-          {dinner.title}
-        </h1>
-
-        {/* Date/time and price */}
-        <p className="body-lg text-body mb-2">
-          {formatLAClock(new Date(dinner.starts_at))}
-        </p>
-        <p className="body-lg font-semibold text-ink mb-6">{price} per seat</p>
-
-        {/* Venue info */}
-        <section className="mb-8">
-          <h2 className="heading-3 mb-2">Location</h2>
-          <p className="body-base text-body">{venueDisplay}</p>
-          {showAddress && venue.address && (
-            <p className="body-base text-body mt-1">{venue.address}</p>
-          )}
-          {showAddress && (() => {
-            const mapsUrl = venueMapsUrl(venue);
-            return mapsUrl ? (
-              <a
-                href={mapsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="body-sm text-terracotta hover:underline mt-2 inline-block"
+        {/* 2. BODY */}
+        <div className="p-6 md:p-8">
+          {/* 2a. Title + meta row */}
+          <h1
+            className="heading-1 mb-3"
+            style={{ color: 'var(--chapter-primary)' }}
+          >
+            {dinner.title}
+          </h1>
+          <div className="flex flex-wrap gap-x-5 gap-y-2 body-base text-body mb-4">
+            <span>{formatLAClock(new Date(dinner.starts_at))}</span>
+            <span>{price} per seat</span>
+            {ctaState === 'reserve' && (
+              <span
+                className="font-medium"
+                style={{ color: 'var(--chapter-accent)' }}
               >
-                View on Google Maps
-              </a>
-            ) : null;
-          })()}
-        </section>
+                {seatsAvailable} {seatsAvailable === 1 ? 'seat' : 'seats'} left
+              </span>
+            )}
+            {ctaState === 'waitlist' && (
+              <span className="font-medium text-warm-gray">
+                Sold out{waitlistCount > 0 ? `, ${waitlistCount} on the waitlist` : ''}
+              </span>
+            )}
+            {ctaState === 'closed' && (
+              <span className="font-medium text-warm-gray">Bookings closed</span>
+            )}
+          </div>
 
-        {/* Menu */}
-        {dinner.menu && (
-          <section className="mb-8">
-            <h2 className="heading-3 mb-2">Menu</h2>
-            <p className="body-base text-body whitespace-pre-line">{dinner.menu}</p>
-          </section>
-        )}
+          {/* 2b. Lead line */}
+          {chapter.tagline ? (
+            <p className="body-lg text-body mb-6">{chapter.tagline}</p>
+          ) : null}
 
-        {/* Who's coming */}
-        <section className="mb-8">
-          <h2 className="heading-3 mb-2">
-            {chapter.short_name} alumni at this table
-          </h2>
-          {attendees.length === 0 ? (
-            <p className="body-base text-warm-gray">
-              No one has booked yet. Be the first to grab a seat.
-            </p>
-          ) : (
-            <>
-              <p className="body-sm text-warm-gray mb-3">
-                {attendees.reduce((sum, a) => sum + (a.brings_partner ? 2 : 1), 0)}{' '}
-                of {dinner.total_seats} seats filled
+          {/* About this dinner */}
+          {dinner.description && (
+            <section className="mb-8">
+              <h2 className="heading-3 mb-2">About this dinner</h2>
+              <p className="body-base text-body whitespace-pre-line">
+                {dinner.description}
               </p>
-              <ul className="space-y-2">
-                {attendees.map((a) => {
-                  const yy = String(a.grad_year).slice(-2);
-                  const parts: string[] = [`${a.first_name} '${yy}`];
-                  if (a.major) parts.push(a.major);
-                  if (a.brings_partner) parts.push('plus guest');
-                  const nameLine = hasConfirmedReservation
-                    ? `${a.first_name} ${a.last_name} '${yy}${a.major ? `, ${a.major}` : ''}${a.brings_partner ? ', plus guest' : ''}`
-                    : parts.join(', ');
-                  return (
-                    <li key={a.reservation_id}>
-                      <p className="body-base text-body">{nameLine}</p>
-                      {hasConfirmedReservation && a.what_do_you_do ? (
-                        <p className="body-sm text-warm-gray">{a.what_do_you_do}</p>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
-            </>
+            </section>
           )}
-        </section>
 
-        {/* Description */}
-        {dinner.description && (
-          <section className="mb-8">
-            <h2 className="heading-3 mb-2">About this dinner</h2>
-            <p className="body-base text-body whitespace-pre-line">
-              {dinner.description}
-            </p>
-          </section>
-        )}
-
-        {/* About the space */}
-        {venue.description && (
-          <section className="mb-8">
-            <h2 className="heading-3 mb-2">About the space</h2>
-            <p className="body-base text-body whitespace-pre-line">
-              {venue.description}
-            </p>
-          </section>
-        )}
-
-        {/* About the chef */}
-        {aboutChef && (
-          <section className="mb-8">
-            <h2 className="heading-3 mb-2">About the chef</h2>
-            {chefName ? (
-              <p className="body-sm text-warm-gray mb-1">{chefName}</p>
-            ) : null}
-            <p className="body-base text-body whitespace-pre-line">{aboutChef}</p>
-          </section>
-        )}
-
-        {/* Parking note */}
-        {hasConfirmedReservation && dinner.parking_note && (
-          <section className="mb-8">
-            <h2 className="heading-3 mb-2">Parking</h2>
-            <p className="body-base text-body whitespace-pre-line">
-              {dinner.parking_note}
-            </p>
-          </section>
-        )}
-
-        {/* Seat status */}
-        <section className="mb-8">
-          <h2 className="heading-3 mb-2">Availability</h2>
-          {isFull ? (
-            <p className="body-base text-body">
-              Sold out{waitlistCount > 0 && ` · ${waitlistCount} on the waitlist`}
-            </p>
-          ) : isPastCutoff || isPast ? (
-            <p className="body-base text-warm-gray">Bookings are closed</p>
-          ) : (
-            <div>
-              <p className="body-base text-body mb-2">
-                {seatsUsed} of {dinner.total_seats} seats filled
-              </p>
-              <div className="h-2 bg-border rounded-full overflow-hidden max-w-xs">
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${(seatsUsed / dinner.total_seats) * 100}%`,
-                    backgroundColor: 'var(--chapter-accent)',
-                  }}
+          {/* 2c. Gallery strip */}
+          {galleryRest.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 mb-8">
+              {galleryRest.map((p) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={p.id}
+                  src={p.url}
+                  alt={p.caption ?? dinner.title}
+                  className="w-full aspect-[4/3] object-cover rounded"
                 />
-              </div>
+              ))}
             </div>
           )}
-        </section>
 
-        {/* Couples note */}
-        {dinner.allows_couples && ctaState === 'reserve' && (
-          <p className="body-sm text-warm-gray mb-6 italic">
-            Couples welcome (additional {price} for your partner).
-          </p>
-        )}
+          {/* 2d. About the space */}
+          {venue.description && (
+            <section className="mb-8">
+              <h2 className="heading-3 mb-2">About the space</h2>
+              <p className="body-base text-body whitespace-pre-line">
+                {venue.description}
+              </p>
+            </section>
+          )}
 
-        {/* CTA */}
-        <div className="mt-8">
-          {ctaState === 'reserve' && (
-            <Link
-              href={`/alumni/${slug}/book/${dinnerId}`}
-              className="inline-block px-8 py-4 rounded-sm body-base font-medium text-white transition-opacity hover:opacity-90"
-              style={{ backgroundColor: 'var(--chapter-accent)' }}
-            >
-              Reserve your seat, {price}
-            </Link>
+          {/* 2e. About the chef */}
+          {aboutChef && (
+            <section className="mb-8">
+              <h2 className="heading-3 mb-1">About the chef</h2>
+              {chefName ? (
+                <p className="body-sm text-warm-gray mb-2">{chefName}</p>
+              ) : null}
+              <p className="body-base text-body whitespace-pre-line">{aboutChef}</p>
+            </section>
           )}
-          {ctaState === 'waitlist' && (
-            <Link
-              href={`/alumni/${slug}/waitlist/${dinnerId}`}
-              className="inline-block px-8 py-4 rounded-sm body-base font-medium border-2 transition-colors hover:opacity-90"
-              style={{
-                borderColor: 'var(--chapter-accent)',
-                color: 'var(--chapter-accent)',
-              }}
-            >
-              Join the waitlist
-            </Link>
+
+          {/* 2f. Menu */}
+          {dinner.menu && (
+            <section className="mb-8">
+              <h2 className="heading-3 mb-3">The menu</h2>
+              <div className="flex flex-col gap-2">
+                {dinner.menu
+                  .split('\n')
+                  .map((l) => l.trim())
+                  .filter(Boolean)
+                  .map((line, i) => (
+                    <div
+                      key={i}
+                      className="border-l-2 pl-3 body-base text-body"
+                      style={{ borderColor: 'var(--chapter-accent)' }}
+                    >
+                      {line}
+                    </div>
+                  ))}
+              </div>
+            </section>
           )}
-          {ctaState === 'closed' && (
-            <p className="body-base text-warm-gray italic">
-              Bookings are closed for this dinner.
+
+          {/* 2g. Who's at the table */}
+          <section className="mb-8">
+            <h2 className="heading-3 mb-1">
+              {chapter.short_name} alumni at this table
+            </h2>
+            <p className="body-sm text-warm-gray mb-3">
+              {seatsUsed} of {dinner.total_seats} seats filled
+            </p>
+            {attendees.length === 0 ? (
+              <p className="body-base text-body">
+                No one has reserved yet. Be the first at the table.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {attendees.map((a) => {
+                  const yy = a.grad_year ? `'${String(a.grad_year).slice(-2)}` : '';
+                  const showLast = hasConfirmedReservation && a.last_name;
+                  const showWork = hasConfirmedReservation && a.what_do_you_do;
+                  return (
+                    <div
+                      key={a.reservation_id}
+                      className="flex items-center gap-2 bg-surface rounded-full pl-1.5 pr-3 py-1.5"
+                    >
+                      <span
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-white body-sm"
+                        style={{ backgroundColor: 'var(--chapter-primary)' }}
+                      >
+                        {a.first_name.charAt(0).toUpperCase()}
+                      </span>
+                      <span className="body-sm text-body">
+                        {a.first_name}
+                        {showLast ? ` ${a.last_name}` : ''}
+                        {yy ? ` · ${yy}` : ''}
+                        {a.major ? ` · ${a.major}` : ''}
+                        {showWork ? ` · ${a.what_do_you_do}` : ''}
+                        {a.brings_partner ? ' + guest' : ''}
+                      </span>
+                    </div>
+                  );
+                })}
+                {seatsAvailable > 0 && (
+                  <div className="flex items-center body-sm text-warm-gray rounded-full px-3.5 py-1.5 border border-dashed border-border">
+                    {seatsAvailable}{' '}
+                    {seatsAvailable === 1 ? 'seat' : 'seats'} open
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* 2h. Location (compact) */}
+          {hasConfirmedReservation && venue.address ? (
+            <section className="mb-6">
+              <h2 className="heading-3 mb-2">Location</h2>
+              <div className="bg-surface rounded p-4">
+                <p className="body-base text-ink font-medium">{venue.name}</p>
+                <p className="body-base text-body mt-1">{venue.address}</p>
+                {mapsUrl ? (
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="body-sm text-terracotta hover:underline mt-2 inline-block"
+                  >
+                    View on Google Maps
+                  </a>
+                ) : null}
+              </div>
+            </section>
+          ) : venue.venue_type === 'home' ? (
+            <section className="mb-6">
+              <h2 className="heading-3 mb-2">Location</h2>
+              <p className="body-base text-body">
+                {host_first_name
+                  ? `Hosted by ${host_first_name}${host_grad_year ? `, '${String(host_grad_year).slice(-2)}` : ''}, in ${area}`
+                  : `Hosted by a fellow alum, in ${area}`}
+              </p>
+            </section>
+          ) : null}
+
+          {/* 2i. Included-details box */}
+          <div className="bg-surface rounded p-4 body-sm text-body mb-6">
+            <p>
+              Your seat covers the full menu. Wine pairings available at the
+              table.
+            </p>
+            {!hasConfirmedReservation ? (
+              <p className="mt-2">
+                Full venue address and details are shared by email once you
+                reserve.
+              </p>
+            ) : null}
+            {hasConfirmedReservation && dinner.parking_note ? (
+              <p className="mt-2 whitespace-pre-line">{dinner.parking_note}</p>
+            ) : null}
+          </div>
+
+          {/* Couples note */}
+          {dinner.allows_couples && ctaState === 'reserve' && (
+            <p className="body-sm text-warm-gray mb-4 italic">
+              Couples welcome (additional {price} for your partner).
             </p>
           )}
+
+          {/* 2j. CTA */}
+          <div>
+            {ctaState === 'reserve' && (
+              <Link
+                href={`/alumni/${slug}/book/${dinnerId}`}
+                className="block w-full text-center px-8 py-4 rounded-md body-base font-medium text-white transition-opacity hover:opacity-90"
+                style={{ backgroundColor: 'var(--chapter-accent)' }}
+              >
+                Reserve your seat, {price}
+              </Link>
+            )}
+            {ctaState === 'waitlist' && (
+              <Link
+                href={`/alumni/${slug}/waitlist/${dinnerId}`}
+                className="block w-full text-center px-8 py-4 rounded-md body-base font-medium border-2 transition-colors hover:opacity-90"
+                style={{
+                  borderColor: 'var(--chapter-accent)',
+                  color: 'var(--chapter-accent)',
+                }}
+              >
+                Join the waitlist
+              </Link>
+            )}
+            {ctaState === 'closed' && (
+              <p className="body-base text-warm-gray italic text-center">
+                Bookings are closed for this dinner.
+              </p>
+            )}
+          </div>
         </div>
-      </div>
+      </article>
     </div>
   );
 }
