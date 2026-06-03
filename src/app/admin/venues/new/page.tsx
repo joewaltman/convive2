@@ -6,7 +6,7 @@ export default async function NewVenuePage() {
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-6">New venue</h1>
-      <VenueForm />
+      <VenueForm photos={[]} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { requireSuperAdmin } from '@/lib/auth/admin';
-import { getVenueById } from '@/lib/venues';
+import { getVenueById, listVenuePhotos } from '@/lib/venues';
 import VenueForm from '../VenueForm';
 
 export default async function EditVenuePage({
@@ -14,10 +14,11 @@ export default async function EditVenuePage({
   if (!Number.isFinite(n)) notFound();
   const venue = await getVenueById(n);
   if (!venue) notFound();
+  const photos = await listVenuePhotos(venue.id);
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-6">Edit venue: {venue.name}</h1>
-      <VenueForm venue={venue} />
+      <VenueForm venue={venue} photos={photos} />
     </div>
   );
 }

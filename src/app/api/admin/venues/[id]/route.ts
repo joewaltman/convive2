@@ -1,7 +1,32 @@
 import { NextResponse } from 'next/server';
 import { requireSuperAdmin } from '@/lib/auth/admin';
-import { getVenueById, updateVenue, deleteVenue, type VenueInput } from '@/lib/venues';
+import {
+  getVenueById,
+  updateVenue,
+  deleteVenue,
+  setVenuePhotos,
+  type VenueInput,
+  type VenuePhotoInput,
+} from '@/lib/venues';
 import type { VenueType } from '@/lib/types';
+
+function parsePhotos(v: unknown): VenuePhotoInput[] | null {
+  if (!Array.isArray(v)) return null;
+  const out: VenuePhotoInput[] = [];
+  for (const item of v) {
+    if (!item || typeof item !== 'object') continue;
+    const o = item as Record<string, unknown>;
+    const url = typeof o.url === 'string' ? o.url.trim() : '';
+    if (!url) continue;
+    const captionRaw = o.caption;
+    const caption =
+      typeof captionRaw === 'string' && captionRaw.trim().length > 0
+        ? captionRaw.trim()
+        : null;
+    out.push({ url, caption });
+  }
+  return out;
+}
 
 const VENUE_TYPES: ReadonlySet<VenueType> = new Set<VenueType>(['restaurant', 'event_space', 'home']);
 
@@ -69,12 +94,19 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     if (v !== null) patch.capacity_max = v;
   }
   if ('description' in b) patch.description = trOrNull(b.description);
-  if ('photo_url' in b) patch.photo_url = trOrNull(b.photo_url);
+  const photos = 'photos' in b ? parsePhotos(b.photos) : null;
+  if ('photo_url' in b || photos) {
+    const fromList = photos && photos.length > 0 ? photos[0].url : null;
+    patch.photo_url = fromList ?? ('photo_url' in b ? trOrNull(b.photo_url) : null);
+  }
+  if ('chef_name' in b) patch.chef_name = trOrNull(b.chef_name);
+  if ('about_chef' in b) patch.about_chef = trOrNull(b.about_chef);
   if ('is_public' in b && typeof b.is_public === 'boolean') patch.is_public = b.is_public;
   if ('is_active' in b && typeof b.is_active === 'boolean') patch.is_active = b.is_active;
 
   const venue = await updateVenue(n, patch);
   if (!venue) return NextResponse.json({ error: 'not_found' }, { status: 404 });
+  if (photos) await setVenuePhotos(venue.id, photos);
   return NextResponse.json({ venue });
 }
 

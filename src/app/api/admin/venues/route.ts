@@ -1,7 +1,31 @@
 import { NextResponse } from 'next/server';
 import { requireSuperAdmin } from '@/lib/auth/admin';
-import { listAllVenues, createVenue, type VenueInput } from '@/lib/venues';
+import {
+  listAllVenues,
+  createVenue,
+  setVenuePhotos,
+  type VenueInput,
+  type VenuePhotoInput,
+} from '@/lib/venues';
 import type { VenueType } from '@/lib/types';
+
+function parsePhotos(v: unknown): VenuePhotoInput[] | null {
+  if (!Array.isArray(v)) return null;
+  const out: VenuePhotoInput[] = [];
+  for (const item of v) {
+    if (!item || typeof item !== 'object') continue;
+    const o = item as Record<string, unknown>;
+    const url = typeof o.url === 'string' ? o.url.trim() : '';
+    if (!url) continue;
+    const captionRaw = o.caption;
+    const caption =
+      typeof captionRaw === 'string' && captionRaw.trim().length > 0
+        ? captionRaw.trim()
+        : null;
+    out.push({ url, caption });
+  }
+  return out;
+}
 
 const VENUE_TYPES: ReadonlySet<VenueType> = new Set<VenueType>(['restaurant', 'event_space', 'home']);
 
@@ -41,6 +65,8 @@ export async function POST(req: Request) {
   if (!VENUE_TYPES.has(vt)) {
     return NextResponse.json({ error: 'invalid_venue_type' }, { status: 400 });
   }
+  const photos = parsePhotos(b.photos);
+  const photoUrlFromList = photos && photos.length > 0 ? photos[0].url : null;
   const input: VenueInput = {
     name,
     venue_type: vt,
@@ -52,10 +78,13 @@ export async function POST(req: Request) {
     capacity_min: numOrNull(b.capacity_min) ?? 6,
     capacity_max: numOrNull(b.capacity_max) ?? 12,
     description: trOrNull(b.description),
-    photo_url: trOrNull(b.photo_url),
+    photo_url: photoUrlFromList ?? trOrNull(b.photo_url),
+    chef_name: trOrNull(b.chef_name),
+    about_chef: trOrNull(b.about_chef),
     is_public: typeof b.is_public === 'boolean' ? b.is_public : true,
     is_active: typeof b.is_active === 'boolean' ? b.is_active : true,
   };
   const venue = await createVenue(input);
+  if (photos) await setVenuePhotos(venue.id, photos);
   return NextResponse.json({ venue });
 }

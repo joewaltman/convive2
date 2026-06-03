@@ -2,8 +2,8 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Venue, VenueType } from '@/lib/types';
-import { VenuePhotoField } from './VenuePhotoField';
+import type { Venue, VenuePhoto, VenueType } from '@/lib/types';
+import { VenuePhotosField, type VenuePhotoFormItem } from './VenuePhotosField';
 
 interface VenueFormState {
   name: string;
@@ -17,12 +17,14 @@ interface VenueFormState {
   capacity_min: string;
   capacity_max: string;
   description: string;
-  photo_url: string;
+  chef_name: string;
+  about_chef: string;
+  photos: VenuePhotoFormItem[];
   is_public: boolean;
   is_active: boolean;
 }
 
-function initial(venue?: Venue): VenueFormState {
+function initial(venue?: Venue, photos?: VenuePhoto[]): VenueFormState {
   return {
     name: venue?.name ?? '',
     venue_type: venue?.venue_type ?? 'restaurant',
@@ -35,7 +37,11 @@ function initial(venue?: Venue): VenueFormState {
     capacity_min: String(venue?.capacity_min ?? 6),
     capacity_max: String(venue?.capacity_max ?? 12),
     description: venue?.description ?? '',
-    photo_url: venue?.photo_url ?? '',
+    chef_name: venue?.chef_name ?? '',
+    about_chef: venue?.about_chef ?? '',
+    photos:
+      photos?.map((p) => ({ url: p.url, caption: p.caption })) ??
+      (venue?.photo_url ? [{ url: venue.photo_url, caption: null }] : []),
     is_public: venue?.is_public ?? true,
     is_active: venue?.is_active ?? true,
   };
@@ -48,9 +54,15 @@ interface GuestSearchResult {
   last_name: string;
 }
 
-export default function VenueForm({ venue }: { venue?: Venue }) {
+export default function VenueForm({
+  venue,
+  photos,
+}: {
+  venue?: Venue;
+  photos?: VenuePhoto[];
+}) {
   const router = useRouter();
-  const [form, setForm] = useState<VenueFormState>(() => initial(venue));
+  const [form, setForm] = useState<VenueFormState>(() => initial(venue, photos));
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +113,10 @@ export default function VenueForm({ venue }: { venue?: Venue }) {
       capacity_min: form.capacity_min ? parseInt(form.capacity_min, 10) : 6,
       capacity_max: form.capacity_max ? parseInt(form.capacity_max, 10) : 12,
       description: form.description,
-      photo_url: form.photo_url,
+      chef_name: form.chef_name,
+      about_chef: form.about_chef,
+      photos: form.photos,
+      photo_url: form.photos[0]?.url ?? null,
       is_public: form.is_public,
       is_active: form.is_active,
     };
@@ -206,13 +221,31 @@ export default function VenueForm({ venue }: { venue?: Venue }) {
       <Text label="Capacity min" value={form.capacity_min} onChange={(v) => setField('capacity_min', v)} />
       <Text label="Capacity max" value={form.capacity_max} onChange={(v) => setField('capacity_max', v)} />
       <div className="md:col-span-2">
-        <VenuePhotoField value={form.photo_url} onChange={(v) => setField('photo_url', v)} />
+        <VenuePhotosField
+          value={form.photos}
+          onChange={(v) => setField('photos', v)}
+        />
       </div>
       <label className="block md:col-span-2">
         <span className="block text-sm mb-1">Description</span>
         <textarea
           value={form.description}
           onChange={(e) => setField('description', e.target.value)}
+          rows={3}
+          className="w-full border border-neutral-300 rounded px-3 py-2 text-sm"
+        />
+      </label>
+      <Text
+        label="Chef name (default)"
+        value={form.chef_name}
+        onChange={(v) => setField('chef_name', v)}
+      />
+      <div className="hidden md:block" />
+      <label className="block md:col-span-2">
+        <span className="block text-sm mb-1">About the chef (default)</span>
+        <textarea
+          value={form.about_chef}
+          onChange={(e) => setField('about_chef', e.target.value)}
           rows={3}
           className="w-full border border-neutral-300 rounded px-3 py-2 text-sm"
         />
