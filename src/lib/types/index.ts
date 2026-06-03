@@ -55,10 +55,21 @@ export interface Venue {
   capacity_max: number;
   description: string | null;
   photo_url: string | null;
+  chef_name: string | null;
+  about_chef: string | null;
   is_public: boolean;
   is_active: boolean;
   created_at: Date;
   updated_at: Date;
+}
+
+export interface VenuePhoto {
+  id: number;
+  venue_id: number;
+  url: string;
+  caption: string | null;
+  sort_order: number;
+  created_at: Date;
 }
 
 export type DinnerStatus = 'draft' | 'published' | 'sold_out' | 'cancelled' | 'completed';
@@ -74,6 +85,8 @@ export interface Dinner {
   host_payout_cents: number | null;
   menu: string | null;
   description: string | null;
+  chef_name: string | null;
+  about_chef: string | null;
   parking_note: string | null;
   booking_cutoff_at: Date | null;
   allows_couples: boolean;
