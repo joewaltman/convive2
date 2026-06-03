@@ -11,10 +11,9 @@ interface Props {
   photos: GalleryPhoto[];
   title: string;
   neighborhoodLabel: string;
-  showRevealChip: boolean;
 }
 
-export function PhotoGallery({ photos, title, neighborhoodLabel, showRevealChip }: Props) {
+export function PhotoGallery({ photos, title, neighborhoodLabel }: Props) {
   const [active, setActive] = useState(0);
 
   if (photos.length === 0) {
@@ -47,11 +46,6 @@ export function PhotoGallery({ photos, title, neighborhoodLabel, showRevealChip 
         >
           {neighborhoodLabel}
         </span>
-        {showRevealChip && (
-          <span className="absolute bottom-3 left-3 px-3 py-1 rounded-md body-sm bg-white/90 text-body border border-border">
-            Exact venue shared when you reserve
-          </span>
-        )}
       </div>
 
       {photos.length > 1 && (

@@ -122,7 +122,6 @@ export default async function DinnerDetailPage({ params }: PageProps) {
           photos={galleryPhotos}
           title={dinner.title}
           neighborhoodLabel={area}
-          showRevealChip={!hasConfirmedReservation && venue.venue_type !== 'home'}
         />
 
         {/* 2. BODY */}
