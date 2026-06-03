@@ -10,6 +10,7 @@ import { venueMapsUrl } from '@/lib/venues';
 import { getCurrentGuest } from '@/lib/auth/guest';
 import { listConfirmedAttendees, listReservationsForGuest } from '@/lib/reservations';
 import { formatLAClock } from '@/lib/time';
+import { PhotoGallery } from '@/components/alumni/PhotoGallery';
 
 interface PageProps {
   params: Promise<{ chapter: string; dinnerId: string }>;
@@ -33,7 +34,7 @@ export default async function DinnerDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const { dinner, venue, photos, host_first_name, host_grad_year } = relations;
+  const { dinner, venue, photos: rawPhotos, host_first_name, host_grad_year } = relations;
 
   // Check if dinner is published and in the future
   const isPast = new Date(dinner.starts_at) < new Date();
@@ -76,9 +77,7 @@ export default async function DinnerDetailPage({ params }: PageProps) {
   const chefName = dinner.chef_name ?? venue.chef_name;
   const aboutChef = dinner.about_chef ?? venue.about_chef;
 
-  // Hero / gallery split
-  const hero = photos[0] ?? null;
-  const galleryRest = photos.slice(1);
+  const galleryPhotos = rawPhotos.map((p) => ({ url: p.url, caption: p.caption }));
 
   // CTA state
   let ctaState: 'reserve' | 'waitlist' | 'closed';
@@ -118,37 +117,13 @@ export default async function DinnerDetailPage({ params }: PageProps) {
       </Link>
 
       <article className="bg-white border border-border rounded-lg overflow-hidden">
-        {/* 1. HERO */}
-        {hero ? (
-          <div className="relative">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={hero.url}
-              alt={hero.caption ?? dinner.title}
-              className="w-full aspect-[16/9] object-cover"
-            />
-            <span
-              className="absolute top-3 left-3 px-3 py-1 rounded-md body-sm font-medium text-white"
-              style={{ backgroundColor: 'var(--chapter-primary)' }}
-            >
-              {area}
-            </span>
-            {!hasConfirmedReservation && venue.venue_type !== 'home' && (
-              <span className="absolute bottom-3 left-3 px-3 py-1 rounded-md body-sm bg-white/90 text-body border border-border">
-                Exact venue shared when you reserve
-              </span>
-            )}
-          </div>
-        ) : (
-          <div className="h-28 bg-surface relative flex items-end">
-            <span
-              className="m-3 px-3 py-1 rounded-md body-sm font-medium text-white"
-              style={{ backgroundColor: 'var(--chapter-primary)' }}
-            >
-              {area}
-            </span>
-          </div>
-        )}
+        {/* 1. PHOTO GALLERY (large image + thumbnails) */}
+        <PhotoGallery
+          photos={galleryPhotos}
+          title={dinner.title}
+          neighborhoodLabel={area}
+          showRevealChip={!hasConfirmedReservation && venue.venue_type !== 'home'}
+        />
 
         {/* 2. BODY */}
         <div className="p-6 md:p-8">
@@ -200,21 +175,6 @@ export default async function DinnerDetailPage({ params }: PageProps) {
                   ))}
               </div>
             </section>
-          )}
-
-          {/* 2c. Gallery strip */}
-          {galleryRest.length > 0 && (
-            <div className="grid grid-cols-3 gap-2 mb-8">
-              {galleryRest.map((p) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={p.id}
-                  src={p.url}
-                  alt={p.caption ?? dinner.title}
-                  className="w-full aspect-[4/3] object-cover rounded"
-                />
-              ))}
-            </div>
           )}
 
           {/* 2d. About the space */}
