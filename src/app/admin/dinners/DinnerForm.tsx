@@ -16,6 +16,8 @@ interface FormState {
   host_payout_cents: string;
   menu: string;
   description: string;
+  chef_name: string;
+  about_chef: string;
   parking_note: string;
   booking_cutoff_at: string;
   allows_couples: boolean;
@@ -64,6 +66,8 @@ function initial(dinner?: Dinner): FormState {
     host_payout_cents: dinner?.host_payout_cents != null ? String(dinner.host_payout_cents) : '',
     menu: dinner?.menu ?? '',
     description: dinner?.description ?? '',
+    chef_name: dinner?.chef_name ?? '',
+    about_chef: dinner?.about_chef ?? '',
     parking_note: dinner?.parking_note ?? '',
     booking_cutoff_at: dinner?.booking_cutoff_at ? formatLALocalInput(dinner.booking_cutoff_at) : '',
     allows_couples: dinner?.allows_couples ?? true,
@@ -90,6 +94,18 @@ export default function DinnerForm({
     setForm((f) => ({ ...f, [k]: v }));
   }
 
+  function onVenueChange(idStr: string) {
+    setForm((f) => {
+      const next: FormState = { ...f, venue_id: idStr };
+      const v = venues.find((x) => String(x.id) === idStr);
+      if (v) {
+        if (f.chef_name.trim() === '' && v.chef_name) next.chef_name = v.chef_name;
+        if (f.about_chef.trim() === '' && v.about_chef) next.about_chef = v.about_chef;
+      }
+      return next;
+    });
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
@@ -104,6 +120,8 @@ export default function DinnerForm({
       host_payout_cents: form.host_payout_cents ? parseInt(form.host_payout_cents, 10) : null,
       menu: form.menu,
       description: form.description,
+      chef_name: form.chef_name,
+      about_chef: form.about_chef,
       parking_note: form.parking_note,
       booking_cutoff_at: form.booking_cutoff_at || null,
       allows_couples: form.allows_couples,
@@ -166,7 +184,7 @@ export default function DinnerForm({
         <select
           required
           value={form.venue_id}
-          onChange={(e) => setField('venue_id', e.target.value)}
+          onChange={(e) => onVenueChange(e.target.value)}
           className="w-full border border-neutral-300 rounded px-3 py-2 text-sm"
         >
           <option value="">Select venue</option>
@@ -274,6 +292,32 @@ export default function DinnerForm({
           onChange={(e) => setField('description', e.target.value)}
           className="w-full border border-neutral-300 rounded px-3 py-2 text-sm"
         />
+      </label>
+
+      <label className="block md:col-span-2">
+        <span className="block text-sm mb-1">Chef name (override)</span>
+        <input
+          type="text"
+          value={form.chef_name}
+          onChange={(e) => setField('chef_name', e.target.value)}
+          className="w-full border border-neutral-300 rounded px-3 py-2 text-sm"
+        />
+        <span className="block text-xs text-neutral-500 mt-1">
+          Leave blank to use the venue default.
+        </span>
+      </label>
+
+      <label className="block md:col-span-2">
+        <span className="block text-sm mb-1">About the chef (override)</span>
+        <textarea
+          rows={3}
+          value={form.about_chef}
+          onChange={(e) => setField('about_chef', e.target.value)}
+          className="w-full border border-neutral-300 rounded px-3 py-2 text-sm"
+        />
+        <span className="block text-xs text-neutral-500 mt-1">
+          Leave blank to use the venue default.
+        </span>
       </label>
 
       <label className="block md:col-span-2">

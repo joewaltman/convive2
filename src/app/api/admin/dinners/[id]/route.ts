@@ -112,6 +112,8 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if ('host_payout_cents' in b) patch.host_payout_cents = numOrNull(b.host_payout_cents);
   if ('menu' in b) patch.menu = trOrNull(b.menu);
   if ('description' in b) patch.description = trOrNull(b.description);
+  if ('chef_name' in b) patch.chef_name = trOrNull(b.chef_name);
+  if ('about_chef' in b) patch.about_chef = trOrNull(b.about_chef);
   if ('parking_note' in b) patch.parking_note = trOrNull(b.parking_note);
   if ('booking_cutoff_at' in b) {
     if (b.booking_cutoff_at === null || b.booking_cutoff_at === '') {

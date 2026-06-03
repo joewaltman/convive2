@@ -139,6 +139,8 @@ export async function POST(req: Request) {
     host_payout_cents: numOrNull(b.host_payout_cents),
     menu: trOrNull(b.menu),
     description: trOrNull(b.description),
+    chef_name: trOrNull(b.chef_name),
+    about_chef: trOrNull(b.about_chef),
     parking_note: trOrNull(b.parking_note),
     booking_cutoff_at: parseDateInput(b.booking_cutoff_at),
     allows_couples: typeof b.allows_couples === 'boolean' ? b.allows_couples : true,
