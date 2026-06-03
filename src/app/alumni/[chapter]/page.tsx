@@ -81,11 +81,8 @@ function DinnerCard({
   // Show the neighborhood. Fall back to city if neighborhood is not set.
   const venueDisplay = dinner.neighborhood || dinner.city || 'Location TBA';
 
-  // Teaser: prefer description; fall back to the first non-empty menu line.
-  const teaser =
-    dinner.description?.trim() ||
-    dinner.menu?.split('\n').map((s) => s.trim()).find(Boolean) ||
-    null;
+  // Teaser: use the dinner's About-the-space override when present.
+  const teaser = dinner.description?.trim() || null;
 
   // Seat status display
   let seatStatus: React.ReactNode;
