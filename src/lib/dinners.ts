@@ -1,9 +1,10 @@
 import { query, withClient } from './db';
-import type { Dinner, Venue, Chapter } from './types';
+import { listVenuePhotos } from './venues';
+import type { Dinner, Venue, Chapter, VenuePhoto } from './types';
 
 const DINNER_COLS = `id, chapter_id, venue_id, title, starts_at, total_seats, price_cents,
   host_payout_cents, menu, description, parking_note, booking_cutoff_at, allows_couples,
-  status, created_at, updated_at`;
+  status, chef_name, about_chef, created_at, updated_at`;
 
 export interface PublicDinnerCard {
   id: number;
@@ -17,6 +18,9 @@ export interface PublicDinnerCard {
   neighborhood: string | null;
   venue_type: Venue['venue_type'];
   venue_display_name: string | null; // restaurant or event-space name; null for home
+  photo_url: string | null;
+  description: string | null;
+  menu: string | null;
   seats_used: number;
   waitlist_count: number;
 }
@@ -35,12 +39,22 @@ export async function listPublicUpcomingByChapter(chapterId: number): Promise<Pu
     neighborhood: string | null;
     venue_type: Venue['venue_type'];
     venue_name: string;
+    photo_url: string | null;
+    description: string | null;
+    menu: string | null;
     seats_used: string | null;
     waitlist_count: string | null;
   }>(
     `SELECT d.id, d.title, d.starts_at, d.total_seats, d.price_cents, d.allows_couples,
-            d.booking_cutoff_at,
+            d.booking_cutoff_at, d.description, d.menu,
             v.city, v.neighborhood, v.venue_type, v.name AS venue_name,
+            COALESCE(
+              (SELECT vp.url FROM venue_photos vp
+               WHERE vp.venue_id = v.id
+               ORDER BY vp.sort_order ASC, vp.id ASC
+               LIMIT 1),
+              v.photo_url
+            ) AS photo_url,
             COALESCE((SELECT SUM(seat_count) FROM reservations r
               WHERE r.dinner_id = d.id
                 AND (r.status = 'confirmed'
@@ -67,6 +81,9 @@ export async function listPublicUpcomingByChapter(chapterId: number): Promise<Pu
     neighborhood: r.neighborhood,
     venue_type: r.venue_type,
     venue_display_name: r.venue_type === 'home' ? null : r.venue_name,
+    photo_url: r.photo_url,
+    description: r.description,
+    menu: r.menu,
     seats_used: parseInt(r.seats_used ?? '0', 10),
     waitlist_count: parseInt(r.waitlist_count ?? '0', 10),
   }));
@@ -76,6 +93,7 @@ export interface DinnerWithRelations {
   dinner: Dinner;
   chapter: Chapter;
   venue: Venue;
+  photos: VenuePhoto[];
   host_first_name?: string | null;
   host_grad_year?: number | null;
 }
@@ -85,10 +103,13 @@ export async function getDinnerWithRelations(id: number): Promise<DinnerWithRela
     `SELECT
        d.id AS d_id, d.chapter_id, d.venue_id, d.title, d.starts_at, d.total_seats, d.price_cents,
        d.host_payout_cents, d.menu, d.description, d.parking_note, d.booking_cutoff_at,
-       d.allows_couples, d.status AS d_status, d.created_at AS d_created_at, d.updated_at AS d_updated_at,
+       d.allows_couples, d.status AS d_status,
+       d.chef_name AS d_chef_name, d.about_chef AS d_about_chef,
+       d.created_at AS d_created_at, d.updated_at AS d_updated_at,
        v.id AS v_id, v.name AS v_name, v.venue_type, v.host_guest_id, v.address, v.neighborhood,
        v.city, v.google_maps_link, v.capacity_min, v.capacity_max, v.description AS v_description,
-       v.photo_url, v.is_public, v.is_active AS v_is_active, v.created_at AS v_created_at,
+       v.photo_url, v.chef_name AS v_chef_name, v.about_chef AS v_about_chef,
+       v.is_public, v.is_active AS v_is_active, v.created_at AS v_created_at,
        v.updated_at AS v_updated_at,
        c.id AS c_id, c.slug, c.short_name, c.school_name, c.display_name, c.tagline,
        c.from_display_name, c.color_primary, c.color_secondary, c.color_header_bg,
@@ -116,6 +137,8 @@ export async function getDinnerWithRelations(id: number): Promise<DinnerWithRela
     host_payout_cents: r.host_payout_cents as number | null,
     menu: r.menu as string | null,
     description: r.description as string | null,
+    chef_name: r.d_chef_name as string | null,
+    about_chef: r.d_about_chef as string | null,
     parking_note: r.parking_note as string | null,
     booking_cutoff_at: r.booking_cutoff_at as Date | null,
     allows_couples: r.allows_couples as boolean,
@@ -136,6 +159,8 @@ export async function getDinnerWithRelations(id: number): Promise<DinnerWithRela
     capacity_max: r.capacity_max as number,
     description: r.v_description as string | null,
     photo_url: r.photo_url as string | null,
+    chef_name: r.v_chef_name as string | null,
+    about_chef: r.v_about_chef as string | null,
     is_public: r.is_public as boolean,
     is_active: r.v_is_active as boolean,
     created_at: r.v_created_at as Date,
@@ -159,10 +184,29 @@ export async function getDinnerWithRelations(id: number): Promise<DinnerWithRela
     created_at: r.c_created_at as Date,
     updated_at: r.c_updated_at as Date,
   };
+  const dbPhotos = await listVenuePhotos(venue.id);
+  let photos: VenuePhoto[];
+  if (dbPhotos.length > 0) {
+    photos = dbPhotos;
+  } else if (venue.photo_url) {
+    photos = [
+      {
+        id: 0,
+        venue_id: venue.id,
+        url: venue.photo_url,
+        caption: null,
+        sort_order: 0,
+        created_at: venue.created_at,
+      },
+    ];
+  } else {
+    photos = [];
+  }
   return {
     dinner,
     chapter,
     venue,
+    photos,
     host_first_name: (r.host_first_name as string | null) ?? null,
     host_grad_year: (r.host_grad_year as number | null) ?? null,
   };
@@ -207,6 +251,8 @@ export interface DinnerInput {
   host_payout_cents?: number | null;
   menu?: string | null;
   description?: string | null;
+  chef_name?: string | null;
+  about_chef?: string | null;
   parking_note?: string | null;
   booking_cutoff_at?: Date | null;
   allows_couples?: boolean;
@@ -216,8 +262,9 @@ export interface DinnerInput {
 export async function createDinner(input: DinnerInput): Promise<Dinner> {
   const rows = await query<Dinner>(
     `INSERT INTO dinners (chapter_id, venue_id, title, starts_at, total_seats, price_cents,
-       host_payout_cents, menu, description, parking_note, booking_cutoff_at, allows_couples, status)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,COALESCE($12,true),COALESCE($13,'draft'))
+       host_payout_cents, menu, description, parking_note, booking_cutoff_at, allows_couples,
+       status, chef_name, about_chef)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,COALESCE($12,true),COALESCE($13,'draft'),$14,$15)
      RETURNING ${DINNER_COLS}`,
     [
       input.chapter_id,
@@ -233,6 +280,8 @@ export async function createDinner(input: DinnerInput): Promise<Dinner> {
       input.booking_cutoff_at ?? null,
       input.allows_couples ?? true,
       input.status ?? 'draft',
+      input.chef_name ?? null,
+      input.about_chef ?? null,
     ],
   );
   return rows[0];

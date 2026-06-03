@@ -193,6 +193,34 @@ export async function markConfirmedFromWebhook(args: {
   return rows[0] ?? null;
 }
 
+export interface DinnerAttendee {
+  reservation_id: number;
+  guest_id: number;
+  first_name: string;
+  last_name: string;
+  what_do_you_do: string | null;
+  grad_year: number;
+  major: string | null;
+  brings_partner: boolean;
+  confirmed_at: Date | null;
+}
+
+/**
+ * Confirmed attendees for a dinner, ordered by confirmation time (oldest
+ * first). One row per reservation; `brings_partner` indicates an extra +1 seat.
+ */
+export async function listConfirmedAttendees(dinnerId: number): Promise<DinnerAttendee[]> {
+  return query<DinnerAttendee>(
+    `SELECT r.id AS reservation_id, r.guest_id, g.first_name, g.last_name,
+            g.what_do_you_do, r.grad_year, r.major, r.brings_partner, r.confirmed_at
+     FROM reservations r
+     JOIN guests g ON g.id = r.guest_id
+     WHERE r.dinner_id = $1 AND r.status = 'confirmed'
+     ORDER BY r.confirmed_at ASC NULLS LAST, r.id ASC`,
+    [dinnerId],
+  );
+}
+
 /** Convenience: bulk seat-and-waitlist details for the admin views */
 export async function listReservationsForDinner(dinnerId: number): Promise<Reservation[]> {
   return query<Reservation>(
