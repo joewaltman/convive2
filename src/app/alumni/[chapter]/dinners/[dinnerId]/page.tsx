@@ -72,10 +72,11 @@ export default async function DinnerDetailPage({ params }: PageProps) {
 
   const area = venue.neighborhood || venue.city || 'Location TBA';
 
-  // Attendees + chef
+  // Attendees + chef + space
   const attendees = await listConfirmedAttendees(dinnerId);
   const chefName = dinner.chef_name ?? venue.chef_name;
   const aboutChef = dinner.about_chef ?? venue.about_chef;
+  const aboutSpace = dinner.description ?? venue.description;
 
   const galleryPhotos = rawPhotos.map((p) => ({ url: p.url, caption: p.caption }));
 
@@ -177,11 +178,11 @@ export default async function DinnerDetailPage({ params }: PageProps) {
           )}
 
           {/* 2d. About the space */}
-          {venue.description && (
+          {aboutSpace && (
             <section className="mb-8">
               <h2 className="heading-3 mb-2">About the space</h2>
               <p className="body-base text-body whitespace-pre-line">
-                {venue.description}
+                {aboutSpace}
               </p>
             </section>
           )}

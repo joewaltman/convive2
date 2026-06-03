@@ -101,6 +101,7 @@ export default function DinnerForm({
       if (v) {
         if (f.chef_name.trim() === '' && v.chef_name) next.chef_name = v.chef_name;
         if (f.about_chef.trim() === '' && v.about_chef) next.about_chef = v.about_chef;
+        if (f.description.trim() === '' && v.description) next.description = v.description;
       }
       return next;
     });
@@ -285,13 +286,16 @@ export default function DinnerForm({
       </label>
 
       <label className="block md:col-span-2">
-        <span className="block text-sm mb-1">Description</span>
+        <span className="block text-sm mb-1">About the space (override)</span>
         <textarea
           rows={3}
           value={form.description}
           onChange={(e) => setField('description', e.target.value)}
           className="w-full border border-neutral-300 rounded px-3 py-2 text-sm"
         />
+        <span className="block text-xs text-neutral-500 mt-1">
+          Leave blank to use the venue default.
+        </span>
       </label>
 
       <label className="block md:col-span-2">
