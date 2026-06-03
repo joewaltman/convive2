@@ -180,18 +180,25 @@ export default async function DinnerDetailPage({ params }: PageProps) {
             )}
           </div>
 
-          {/* 2b. Lead line */}
-          {chapter.tagline ? (
-            <p className="body-lg text-body mb-6">{chapter.tagline}</p>
-          ) : null}
-
-          {/* About this dinner */}
-          {dinner.description && (
+          {/* 2b. Menu */}
+          {dinner.menu && (
             <section className="mb-8">
-              <h2 className="heading-3 mb-2">About this dinner</h2>
-              <p className="body-base text-body whitespace-pre-line">
-                {dinner.description}
-              </p>
+              <h2 className="heading-3 mb-3">The menu</h2>
+              <div className="flex flex-col gap-2">
+                {dinner.menu
+                  .split('\n')
+                  .map((l) => l.trim())
+                  .filter(Boolean)
+                  .map((line, i) => (
+                    <div
+                      key={i}
+                      className="border-l-2 pl-3 body-base text-body"
+                      style={{ borderColor: 'var(--chapter-accent)' }}
+                    >
+                      {line}
+                    </div>
+                  ))}
+              </div>
             </section>
           )}
 
@@ -228,28 +235,6 @@ export default async function DinnerDetailPage({ params }: PageProps) {
                 <p className="body-sm text-warm-gray mb-2">{chefName}</p>
               ) : null}
               <p className="body-base text-body whitespace-pre-line">{aboutChef}</p>
-            </section>
-          )}
-
-          {/* 2f. Menu */}
-          {dinner.menu && (
-            <section className="mb-8">
-              <h2 className="heading-3 mb-3">The menu</h2>
-              <div className="flex flex-col gap-2">
-                {dinner.menu
-                  .split('\n')
-                  .map((l) => l.trim())
-                  .filter(Boolean)
-                  .map((line, i) => (
-                    <div
-                      key={i}
-                      className="border-l-2 pl-3 body-base text-body"
-                      style={{ borderColor: 'var(--chapter-accent)' }}
-                    >
-                      {line}
-                    </div>
-                  ))}
-              </div>
             </section>
           )}
 
@@ -334,21 +319,19 @@ export default async function DinnerDetailPage({ params }: PageProps) {
           ) : null}
 
           {/* 2i. Included-details box */}
-          <div className="bg-surface rounded p-4 body-sm text-body mb-6">
-            <p>
-              Your seat covers the full menu. Wine pairings available at the
-              table.
-            </p>
-            {!hasConfirmedReservation ? (
-              <p className="mt-2">
-                Full venue address and details are shared by email once you
-                reserve.
-              </p>
-            ) : null}
-            {hasConfirmedReservation && dinner.parking_note ? (
-              <p className="mt-2 whitespace-pre-line">{dinner.parking_note}</p>
-            ) : null}
-          </div>
+          {(!hasConfirmedReservation || (hasConfirmedReservation && dinner.parking_note)) && (
+            <div className="bg-surface rounded p-4 body-sm text-body mb-6">
+              {!hasConfirmedReservation ? (
+                <p>
+                  Full venue address and details are shared by email once you
+                  reserve.
+                </p>
+              ) : null}
+              {hasConfirmedReservation && dinner.parking_note ? (
+                <p className="whitespace-pre-line">{dinner.parking_note}</p>
+              ) : null}
+            </div>
+          )}
 
           {/* Couples note */}
           {dinner.allows_couples && ctaState === 'reserve' && (
