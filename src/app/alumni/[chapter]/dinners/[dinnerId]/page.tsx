@@ -8,7 +8,7 @@ import {
 } from '@/lib/dinners';
 import { venueMapsUrl } from '@/lib/venues';
 import { getCurrentGuest } from '@/lib/auth/guest';
-import { listReservationsForGuest } from '@/lib/reservations';
+import { listConfirmedAttendees, listReservationsForGuest } from '@/lib/reservations';
 import { formatLAClock } from '@/lib/time';
 
 interface PageProps {
@@ -33,7 +33,7 @@ export default async function DinnerDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const { dinner, venue, host_first_name, host_grad_year } = relations;
+  const { dinner, venue, photos, host_first_name, host_grad_year } = relations;
 
   // Check if dinner is published and in the future
   const isPast = new Date(dinner.starts_at) < new Date();
@@ -86,8 +86,14 @@ export default async function DinnerDetailPage({ params }: PageProps) {
       : 'Hosted by a fellow alum';
     venueDisplay = `${hostInfo}, in ${area || 'the area'}`;
   } else {
-    venueDisplay = [venue.name, area].filter(Boolean).join(', ') || 'Venue TBA';
+    venueDisplay = area || 'Venue TBA';
   }
+
+  // Confirmed attendees ("Who's coming"). Always fetched; the rendering decides
+  // which fields are exposed based on hasConfirmedReservation.
+  const attendees = await listConfirmedAttendees(dinnerId);
+  const chefName = dinner.chef_name ?? venue.chef_name;
+  const aboutChef = dinner.about_chef ?? venue.about_chef;
 
   // Determine CTA state
   let ctaState: 'reserve' | 'waitlist' | 'closed';
@@ -125,14 +131,29 @@ export default async function DinnerDetailPage({ params }: PageProps) {
           Back to dinners
         </Link>
 
-        {/* Venue photo */}
-        {venue.photo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={venue.photo_url}
-            alt={venue.name}
-            className="w-full aspect-[4/3] object-cover rounded mb-6"
-          />
+        {/* Venue photo gallery */}
+        {photos.length > 0 ? (
+          <div className="mb-6">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photos[0].url}
+              alt={photos[0].caption ?? dinner.title}
+              className="w-full aspect-[4/3] object-cover rounded"
+            />
+            {photos.length > 1 ? (
+              <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {photos.slice(1).map((p) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={p.id}
+                    src={p.url}
+                    alt={p.caption ?? dinner.title}
+                    className="w-full aspect-[4/3] object-cover rounded"
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
         ) : null}
 
         {/* Eyebrow: city */}
@@ -182,6 +203,44 @@ export default async function DinnerDetailPage({ params }: PageProps) {
           </section>
         )}
 
+        {/* Who's coming */}
+        <section className="mb-8">
+          <h2 className="heading-3 mb-2">
+            {chapter.short_name} alumni at this table
+          </h2>
+          {attendees.length === 0 ? (
+            <p className="body-base text-warm-gray">
+              No one has booked yet. Be the first to grab a seat.
+            </p>
+          ) : (
+            <>
+              <p className="body-sm text-warm-gray mb-3">
+                {attendees.reduce((sum, a) => sum + (a.brings_partner ? 2 : 1), 0)}{' '}
+                of {dinner.total_seats} seats filled
+              </p>
+              <ul className="space-y-2">
+                {attendees.map((a) => {
+                  const yy = String(a.grad_year).slice(-2);
+                  const parts: string[] = [`${a.first_name} '${yy}`];
+                  if (a.major) parts.push(a.major);
+                  if (a.brings_partner) parts.push('plus guest');
+                  const nameLine = hasConfirmedReservation
+                    ? `${a.first_name} ${a.last_name} '${yy}${a.major ? `, ${a.major}` : ''}${a.brings_partner ? ', plus guest' : ''}`
+                    : parts.join(', ');
+                  return (
+                    <li key={a.reservation_id}>
+                      <p className="body-base text-body">{nameLine}</p>
+                      {hasConfirmedReservation && a.what_do_you_do ? (
+                        <p className="body-sm text-warm-gray">{a.what_do_you_do}</p>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+        </section>
+
         {/* Description */}
         {dinner.description && (
           <section className="mb-8">
@@ -192,13 +251,24 @@ export default async function DinnerDetailPage({ params }: PageProps) {
           </section>
         )}
 
-        {/* About the venue */}
+        {/* About the space */}
         {venue.description && (
           <section className="mb-8">
-            <h2 className="heading-3 mb-2">About the venue</h2>
+            <h2 className="heading-3 mb-2">About the space</h2>
             <p className="body-base text-body whitespace-pre-line">
               {venue.description}
             </p>
+          </section>
+        )}
+
+        {/* About the chef */}
+        {aboutChef && (
+          <section className="mb-8">
+            <h2 className="heading-3 mb-2">About the chef</h2>
+            {chefName ? (
+              <p className="body-sm text-warm-gray mb-1">{chefName}</p>
+            ) : null}
+            <p className="body-base text-body whitespace-pre-line">{aboutChef}</p>
           </section>
         )}
 

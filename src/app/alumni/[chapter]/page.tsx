@@ -81,6 +81,12 @@ function DinnerCard({
   // Show the neighborhood. Fall back to city if neighborhood is not set.
   const venueDisplay = dinner.neighborhood || dinner.city || 'Location TBA';
 
+  // Teaser: prefer description; fall back to the first non-empty menu line.
+  const teaser =
+    dinner.description?.trim() ||
+    dinner.menu?.split('\n').map((s) => s.trim()).find(Boolean) ||
+    null;
+
   // Seat status display
   let seatStatus: React.ReactNode;
   if (isPastCutoff) {
@@ -116,18 +122,31 @@ function DinnerCard({
   return (
     <Link
       href={`/alumni/${chapterSlug}/dinners/${dinner.id}`}
-      className="block bg-surface rounded-sm p-5 hover:shadow-md transition-shadow"
+      className="block bg-surface rounded-sm hover:shadow-md transition-shadow overflow-hidden"
     >
-      <p className="eyebrow mb-2">{venueDisplay}</p>
-      <h4
-        className="heading-3 mb-2"
-        style={{ color: 'var(--chapter-primary)' }}
-      >
-        {dinner.title}
-      </h4>
-      <p className="body-sm text-body mb-3">{formatLAClock(new Date(dinner.starts_at))}</p>
-      <p className="body-base font-semibold text-ink mb-3">{price} per seat</p>
-      {seatStatus}
+      {dinner.photo_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={dinner.photo_url}
+          alt={dinner.title}
+          className="w-full aspect-[4/3] object-cover"
+        />
+      ) : null}
+      <div className="p-5">
+        <p className="eyebrow mb-2">{venueDisplay}</p>
+        <h4
+          className="heading-3 mb-2"
+          style={{ color: 'var(--chapter-primary)' }}
+        >
+          {dinner.title}
+        </h4>
+        {teaser ? (
+          <p className="body-sm text-body line-clamp-2 mb-3">{teaser}</p>
+        ) : null}
+        <p className="body-sm text-body mb-3">{formatLAClock(new Date(dinner.starts_at))}</p>
+        <p className="body-base font-semibold text-ink mb-3">{price} per seat</p>
+        {seatStatus}
+      </div>
     </Link>
   );
 }
