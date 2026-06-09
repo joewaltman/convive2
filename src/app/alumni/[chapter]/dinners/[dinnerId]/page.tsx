@@ -34,7 +34,7 @@ export default async function DinnerDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const { dinner, venue, photos: rawPhotos, host_first_name, host_grad_year } = relations;
+  const { dinner, venue, photos: rawPhotos } = relations;
 
   // Check if dinner is published and in the future
   const isPast = new Date(dinner.starts_at) < new Date();
@@ -271,17 +271,17 @@ export default async function DinnerDetailPage({ params }: PageProps) {
             <section className="mb-6">
               <h2 className="heading-3 mb-2">Location</h2>
               <p className="body-base text-body">
-                {host_first_name
-                  ? `Hosted by ${host_first_name}${host_grad_year ? `, '${String(host_grad_year).padStart(2, '0').slice(-2)}` : ''}, in ${area}`
-                  : `Hosted by a fellow alum, in ${area}`}
+                Full venue address and details are shared by email once you
+                reserve.
               </p>
             </section>
           ) : null}
 
           {/* 2i. Included-details box */}
-          {(!hasConfirmedReservation || (hasConfirmedReservation && dinner.parking_note)) && (
+          {((!hasConfirmedReservation && venue.venue_type !== 'home') ||
+            (hasConfirmedReservation && dinner.parking_note)) && (
             <div className="bg-surface rounded p-4 body-sm text-body mb-6">
-              {!hasConfirmedReservation ? (
+              {!hasConfirmedReservation && venue.venue_type !== 'home' ? (
                 <p>
                   Full venue address and details are shared by email once you
                   reserve.
