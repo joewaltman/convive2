@@ -213,7 +213,7 @@ export default async function DinnerDetailPage({ params }: PageProps) {
             ) : (
               <div className="flex flex-wrap gap-2">
                 {attendees.map((a) => {
-                  const yy = a.grad_year ? `'${String(a.grad_year).slice(-2)}` : '';
+                  const yy = a.grad_year ? `'${String(a.grad_year).padStart(2, '0').slice(-2)}` : '';
                   const showLast = hasConfirmedReservation && a.last_name;
                   const showWork = hasConfirmedReservation && a.what_do_you_do;
                   return (
@@ -272,7 +272,7 @@ export default async function DinnerDetailPage({ params }: PageProps) {
               <h2 className="heading-3 mb-2">Location</h2>
               <p className="body-base text-body">
                 {host_first_name
-                  ? `Hosted by ${host_first_name}${host_grad_year ? `, '${String(host_grad_year).slice(-2)}` : ''}, in ${area}`
+                  ? `Hosted by ${host_first_name}${host_grad_year ? `, '${String(host_grad_year).padStart(2, '0').slice(-2)}` : ''}, in ${area}`
                   : `Hosted by a fellow alum, in ${area}`}
               </p>
             </section>
