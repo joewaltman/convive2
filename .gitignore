@@ -44,3 +44,6 @@ next-env.d.ts
 
 # Spec extraction (local only)
 .spec-extract.md
+
+# Lunch Club legacy archive (local only)
+/archive/
