@@ -6,6 +6,8 @@ import {
   getDistinctDietaryRestrictions,
 } from '@/lib/lunchclub/data';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Lunch Club',
   description:
