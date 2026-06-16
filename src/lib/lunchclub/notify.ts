@@ -61,11 +61,20 @@ export async function sendJoeNotification(props: JoeNotificationProps): Promise<
   const subject = `[Lunch Club] New signup: ${props.input.first_name} ${
     props.input.last_name ?? ''
   } (${props.input.source})`.trim();
-  await sendEmail({
+  const to = joeNotificationEmail();
+  const result = await sendEmail({
     from: platformFrom(),
-    to: joeNotificationEmail(),
+    to,
     replyTo: replyTo(),
     subject,
     react: buildJoeNotificationEmail(props),
   });
+  if (result?.error) {
+    const e = result.error as { name?: string; message?: string };
+    throw new Error(
+      `Resend send failed for ${to}: ${e.name ?? 'UnknownError'}: ${e.message ?? 'no message'}`,
+    );
+  }
+  const id = result?.data?.id ?? '(no id)';
+  console.log(`[lunchclub] joe notification sent to ${to} (resend id ${id})`);
 }
