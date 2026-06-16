@@ -1,9 +1,11 @@
+import { formatDisplayName } from '@/lib/lunchclub/format';
+
 export interface ThankYouPanelProps {
   firstName: string;
 }
 
 export function ThankYouPanel({ firstName }: ThankYouPanelProps) {
-  const name = firstName && firstName.trim().length > 0 ? firstName.trim() : 'there';
+  const name = formatDisplayName(firstName) || 'there';
   return (
     <div className="py-12 text-center space-y-4">
       <h2 className="heading-2">Thanks, {name}.</h2>

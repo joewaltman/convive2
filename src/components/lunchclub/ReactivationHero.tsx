@@ -1,11 +1,12 @@
 import { HowItWorks } from './HowItWorks';
+import { formatDisplayName } from '@/lib/lunchclub/format';
 
 export interface ReactivationHeroProps {
   firstName: string | null;
 }
 
 export function ReactivationHero({ firstName }: ReactivationHeroProps) {
-  const name = firstName && firstName.trim().length > 0 ? firstName.trim() : 'there';
+  const name = formatDisplayName(firstName) || 'there';
   return (
     <div className="space-y-12">
       <header className="space-y-6">
