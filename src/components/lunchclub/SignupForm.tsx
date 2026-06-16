@@ -35,12 +35,10 @@ interface FormShape {
   solo_or_with: 'solo' | 'with' | '';
   companion_name: string;
 
-  comfort_notes: string;
   dietary_restrictions: string[];
   dietary_notes: string;
 
   q_career: string;
-  q_chapter: string;
   q_curious: string;
   q_surprising: string;
   q_best_gathering: string;
@@ -57,6 +55,19 @@ const WEEKDAY_OPTIONS = [
   { value: 'thu', label: 'Thursday' },
   { value: 'fri', label: 'Friday' },
 ];
+
+const LIFE_STAGE_OPTIONS = [
+  { value: 'working', label: 'Working' },
+  { value: 'semi-retired', label: 'Semi-retired' },
+  { value: 'fully retired', label: 'Fully retired' },
+  { value: 'something else', label: 'Something else' },
+];
+
+function ageRangeSortKey(s: string): number {
+  if (/under/i.test(s)) return 0;
+  const m = s.match(/\d+/);
+  return m ? parseInt(m[0], 10) : 9999;
+}
 
 const inputCls =
   'w-full px-4 min-h-[52px] border border-border rounded-sm bg-white body-base text-ink focus:outline-none focus:ring-2 focus:ring-terracotta/50 aria-[invalid=true]:border-terracotta';
@@ -98,12 +109,10 @@ export function SignupForm({
       solo_or_with: '',
       companion_name: '',
 
-      comfort_notes: '',
       dietary_restrictions: prefill?.dietary_restrictions ?? [],
       dietary_notes: prefill?.dietary_notes ?? '',
 
       q_career: prefill?.q_career ?? '',
-      q_chapter: '',
       q_curious: prefill?.q_curious ?? '',
       q_surprising: prefill?.q_surprising ?? '',
       q_best_gathering: '',
@@ -120,7 +129,7 @@ export function SignupForm({
   const ageOptions = useMemo(() => {
     const set = new Set<string>(ageRangeOptions ?? []);
     if (form.age_range) set.add(form.age_range);
-    return Array.from(set);
+    return Array.from(set).sort((a, b) => ageRangeSortKey(a) - ageRangeSortKey(b));
   }, [ageRangeOptions, form.age_range]);
 
   const dietaryFinal = useMemo(() => {
@@ -159,11 +168,11 @@ export function SignupForm({
       life_stage: form.life_stage || null,
       solo_or_with: form.solo_or_with || null,
       companion_name: form.companion_name || null,
-      comfort_notes: form.comfort_notes || null,
+      comfort_notes: null,
       dietary_restrictions: form.dietary_restrictions,
       dietary_notes: form.dietary_notes || null,
       q_career: form.q_career || null,
-      q_chapter: form.q_chapter || null,
+      q_chapter: null,
       q_curious: form.q_curious || null,
       q_surprising: form.q_surprising || null,
       q_best_gathering: form.q_best_gathering || null,
@@ -390,13 +399,19 @@ export function SignupForm({
         </Field>
 
         <Field id="life_stage" label="Life stage" error={fe('life_stage')}>
-          <input
+          <select
             id="life_stage"
-            type="text"
             value={form.life_stage}
             onChange={(e) => update('life_stage', e.target.value)}
             className={inputCls}
-          />
+          >
+            <option value="">Choose one</option>
+            {LIFE_STAGE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </Field>
 
         <Field id="solo_or_with" label="Coming solo or with someone?" error={fe('solo_or_with')}>
@@ -425,21 +440,7 @@ export function SignupForm({
       </section>
 
       <section className="space-y-6">
-        <h2 className="heading-2">Comfort and food</h2>
-
-        <Field
-          id="comfort_notes"
-          label="Anything that would help you feel comfortable at lunch?"
-          error={fe('comfort_notes')}
-        >
-          <textarea
-            id="comfort_notes"
-            value={form.comfort_notes}
-            onChange={(e) => update('comfort_notes', e.target.value)}
-            className={textareaCls}
-            rows={3}
-          />
-        </Field>
+        <h2 className="heading-2">Food</h2>
 
         <Field
           id="dietary_restrictions"
@@ -477,20 +478,6 @@ export function SignupForm({
             id="q_career"
             value={form.q_career}
             onChange={(e) => update('q_career', e.target.value)}
-            className={textareaCls}
-            rows={3}
-          />
-        </Field>
-
-        <Field
-          id="q_chapter"
-          label="What chapter of life are you in right now?"
-          error={fe('q_chapter')}
-        >
-          <textarea
-            id="q_chapter"
-            value={form.q_chapter}
-            onChange={(e) => update('q_chapter', e.target.value)}
             className={textareaCls}
             rows={3}
           />
