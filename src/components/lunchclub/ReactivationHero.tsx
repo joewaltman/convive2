@@ -1,3 +1,5 @@
+import { HowItWorks } from './HowItWorks';
+
 export interface ReactivationHeroProps {
   firstName: string | null;
 }
@@ -5,13 +7,16 @@ export interface ReactivationHeroProps {
 export function ReactivationHero({ firstName }: ReactivationHeroProps) {
   const name = firstName && firstName.trim().length > 0 ? firstName.trim() : 'there';
   return (
-    <header className="space-y-4">
-      <p className="eyebrow">WELCOME BACK</p>
-      <h1 className="heading-1">Welcome back, {name}.</h1>
-      <p className="body-lg text-body">
-        Good to see you. We have your earlier answers below, so you only need to fill
-        in what is new. Anything you change here will replace what we had on file.
-      </p>
-    </header>
+    <div className="space-y-12">
+      <header className="space-y-6">
+        <h1 className="heading-1">Good to see you again, {name}.</h1>
+        <p className="body-lg text-body">
+          A while back you signed up to share a table with people you hadn&apos;t met
+          yet. I&apos;m starting something new in that same spirit, a monthly lunch
+          club, and you came to mind.
+        </p>
+      </header>
+      <HowItWorks />
+    </div>
   );
 }
