@@ -20,6 +20,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <Link href="/admin/venues" className="hover:underline">Venues</Link>
             <Link href="/admin/guests" className="hover:underline">Guests</Link>
             <Link href="/admin/leads" className="hover:underline">Leads</Link>
+            <Link href="/admin/lunchclub/tables" className="hover:underline">LC tables</Link>
+            <Link href="/admin/lunchclub/lunches" className="hover:underline">LC lunches</Link>
             <Link href="/admin/system" className="hover:underline">System</Link>
             <form action="/api/admin/auth/logout" method="post" className="inline">
               <button

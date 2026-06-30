@@ -18,6 +18,7 @@ import {
   generateIcsDownloadUrl,
 } from '@/lib/calendar';
 import ReservationConfirmation from '@/emails/reservation-confirmation';
+import { handleLunchclubCheckoutCompleted } from '@/lib/lunchclub/webhook-handler';
 
 // Stripe webhook requires the Node.js runtime (raw body access; not Edge-compatible)
 export const runtime = 'nodejs';
@@ -66,6 +67,14 @@ export async function POST(req: Request) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
     const sessionId = session.id;
+
+    // Dispatch lunch-club checkout sessions to the lunchclub handler. Alumni
+    // sessions (no metadata.module or anything other than 'lunchclub') fall
+    // through to the original reservation flow below.
+    if (session.metadata?.module === 'lunchclub') {
+      const summary = await handleLunchclubCheckoutCompleted(session);
+      return NextResponse.json({ received: true, ...summary });
+    }
 
     const reservation = await getReservationByCheckoutSession(sessionId);
     if (!reservation) {

@@ -47,3 +47,6 @@ next-env.d.ts
 
 # Lunch Club legacy archive (local only)
 /archive/
+
+# Lunch Club reactivation send script (local only, contains API key)
+scripts/lunchclub/send-reactivation.local.ts
